@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+build/*
+!build/entitlements.mac.plist
+!build/icon.icns
+!build/icon.ico
+!build/icon.png
+
+# electron-builder release artifacts
+release/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log*
+npm-debug.log*
+
+# Caches
+.eslintcache
+.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+
+# electron-vite / electron-builder
+dev-app-update.yml
+
+# Docs
+docs/
+CLAUDE.md
+.claude/
