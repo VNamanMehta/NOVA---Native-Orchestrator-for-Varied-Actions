@@ -2,6 +2,7 @@ import { app, BrowserWindow, Tray } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createWindow, getMainWindow } from './window'
 import { createTray } from './tray'
+import { registerHotkey, unregisterHotkey } from './hotkey'
 
 let tray: Tray | null = null
 
@@ -30,6 +31,7 @@ if (!gotSingleInstanceLock) {
 
     createWindow()
     tray = createTray()
+    registerHotkey()
 
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -43,5 +45,9 @@ if (!gotSingleInstanceLock) {
 
   app.on('before-quit', () => {
     tray?.destroy()
+  })
+
+  app.on('will-quit', () => {
+    unregisterHotkey()
   })
 }

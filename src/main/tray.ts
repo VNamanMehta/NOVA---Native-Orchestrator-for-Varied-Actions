@@ -1,6 +1,6 @@
 import { app, Menu, Tray } from 'electron'
 import icon from '../../resources/icon.png?asset'
-import { getMainWindow } from './window'
+import { getMainWindow, toggleWindowVisibility } from './window'
 
 export function createTray(): Tray {
   const tray = new Tray(icon)
@@ -23,14 +23,7 @@ export function createTray(): Tray {
 
   // Left-click toggles visibility as a quick alternative to the hotkey.
   tray.on('click', () => {
-    const mainWindow = getMainWindow()
-    if (!mainWindow) return
-    if (mainWindow.isVisible()) {
-      mainWindow.hide()
-    } else {
-      mainWindow.show()
-      mainWindow.focus()
-    }
+    toggleWindowVisibility()
   })
 
   return tray

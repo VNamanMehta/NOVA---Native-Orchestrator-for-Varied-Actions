@@ -39,3 +39,15 @@ export function createWindow(): BrowserWindow {
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow
 }
+
+// Shared by the tray and the global hotkey so both trigger identical behavior.
+export function toggleWindowVisibility(): void {
+  const window = getMainWindow()
+  if (!window) return
+  if (window.isVisible()) {
+    window.hide()
+  } else {
+    window.show()
+    window.focus()
+  }
+}
