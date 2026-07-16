@@ -10,16 +10,14 @@ export function createWindow(): BrowserWindow {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
+    frame: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
     }
-  })
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow?.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
