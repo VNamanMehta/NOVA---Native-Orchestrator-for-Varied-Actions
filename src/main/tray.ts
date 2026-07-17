@@ -1,29 +1,41 @@
 import { app, Menu, Tray } from 'electron'
 import icon from '../../resources/icon.png?asset'
-import { getMainWindow, toggleWindowVisibility } from './window'
+import {
+  hideIfMenuDismissed,
+  isPinned,
+  setPinned,
+  showWindow,
+  toggleWindowVisibility
+} from './window'
+import { registerTray } from './utils/trayBounds'
+
+function buildMenu(): Menu {
+  return Menu.buildFromTemplate([
+    {
+      label: 'Show Nova',
+      click: () => showWindow()
+    },
+    {
+      label: 'Pin Nova',
+      type: 'checkbox',
+      checked: isPinned(),
+      click: (menuItem) => setPinned(menuItem.checked)
+    },
+    { type: 'separator' },
+    { label: 'Quit', click: () => app.quit() }
+  ])
+}
 
 export function createTray(): Tray {
   const tray = new Tray(icon)
+  registerTray(tray)
   tray.setToolTip('Nova')
 
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      {
-        label: 'Show Nova',
-        click: () => {
-          const mainWindow = getMainWindow()
-          mainWindow?.show()
-          mainWindow?.focus()
-        }
-      },
-      { type: 'separator' },
-      { label: 'Quit', click: () => app.quit() }
-    ])
-  )
-
-  // Left-click toggles visibility as a quick alternative to the hotkey.
-  tray.on('click', () => {
-    toggleWindowVisibility()
+  tray.on('click', () => toggleWindowVisibility())
+  tray.on('right-click', () => {
+    const menu = buildMenu()
+    menu.on('menu-will-close', () => hideIfMenuDismissed())
+    tray.popUpContextMenu(menu)
   })
 
   return tray

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Tray } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
-import { createWindow, getMainWindow } from './window'
+import { createWindow, getMainWindow, setQuitting } from './window'
 import { createTray } from './tray'
 import { registerHotkey, unregisterHotkey } from './hotkey'
 
@@ -38,12 +38,10 @@ if (!gotSingleInstanceLock) {
     })
   })
 
-  // Interim: quits on close everywhere until tray.ts/window.ts add hide-on-close.
-  app.on('window-all-closed', () => {
-    app.quit()
-  })
+  app.on('window-all-closed', () => {})
 
   app.on('before-quit', () => {
+    setQuitting(true)
     tray?.destroy()
   })
 
