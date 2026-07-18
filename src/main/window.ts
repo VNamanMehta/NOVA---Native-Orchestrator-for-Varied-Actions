@@ -7,6 +7,9 @@ import { getTrayBounds, pointInRect } from './utils/trayBounds'
 let mainWindow: BrowserWindow | null = null
 let pinned = false
 let quitting = false
+let readyToShow = false
+let pendingShow = false
+let primed = false
 
 function cursorOverTray(): boolean {
   const bounds = getTrayBounds()
@@ -17,6 +20,24 @@ function cursorOverTray(): boolean {
 function raiseWindow(): void {
   mainWindow?.moveTop()
   mainWindow?.focus()
+}
+
+function isTrulyVisible(): boolean {
+  return !!mainWindow && mainWindow.isVisible() && mainWindow.getOpacity() > 0
+}
+
+function primePaint(): void {
+  if (!mainWindow || primed || mainWindow.isVisible()) return
+  primed = true
+  mainWindow.setOpacity(0)
+  mainWindow.showInactive()
+  setTimeout(() => {
+    if (!mainWindow) return
+    if (!isTrulyVisible()) {
+      mainWindow.hide()
+      mainWindow.setOpacity(1)
+    }
+  }, 80)
 }
 
 export function createWindow(): BrowserWindow {
@@ -30,7 +51,18 @@ export function createWindow(): BrowserWindow {
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      backgroundThrottling: false
+    }
+  })
+
+  mainWindow.once('ready-to-show', () => {
+    readyToShow = true
+    if (pendingShow) {
+      pendingShow = false
+      showWindow()
+    } else {
+      primePaint()
     }
   })
 
@@ -78,11 +110,21 @@ export function isPinned(): boolean {
 
 export function setPinned(value: boolean): void {
   pinned = value
-  if (value && mainWindow?.isVisible()) raiseWindow()
+  if (!value) return
+  setTimeout(() => {
+    if (!pinned) return
+    showWindow()
+  }, 0)
 }
 
 export function showWindow(): void {
-  mainWindow?.show()
+  if (!mainWindow) return
+  if (!readyToShow) {
+    pendingShow = true
+    return
+  }
+  mainWindow.setOpacity(1)
+  mainWindow.show()
   raiseWindow()
 }
 
@@ -95,10 +137,9 @@ export function hideIfMenuDismissed(): void {
 
 // Shared by the tray and the global hotkey so both trigger identical behavior.
 export function toggleWindowVisibility(): void {
-  const window = getMainWindow()
-  if (!window) return
-  if (window.isVisible()) {
-    window.hide()
+  if (!mainWindow) return
+  if (isTrulyVisible()) {
+    mainWindow.hide()
   } else {
     showWindow()
   }

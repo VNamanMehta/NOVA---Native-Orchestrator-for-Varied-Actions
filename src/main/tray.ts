@@ -26,17 +26,16 @@ function buildMenu(): Menu {
   ])
 }
 
-export function createTray(): Tray {
+export function createTray(): void {
   const tray = new Tray(icon)
   registerTray(tray)
   tray.setToolTip('Nova')
 
   tray.on('click', () => toggleWindowVisibility())
+  tray.on('double-click', () => toggleWindowVisibility())
   tray.on('right-click', () => {
     const menu = buildMenu()
     menu.on('menu-will-close', () => hideIfMenuDismissed())
     tray.popUpContextMenu(menu)
   })
-
-  return tray
 }

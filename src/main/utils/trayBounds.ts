@@ -6,6 +6,11 @@ export function registerTray(instance: Tray): void {
   tray = instance
 }
 
+export function destroyTray(): void {
+  tray?.destroy()
+  tray = null
+}
+
 export function getTrayBounds(): Rectangle | null {
   return tray?.getBounds() ?? null
 }

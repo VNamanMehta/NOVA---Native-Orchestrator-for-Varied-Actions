@@ -1,10 +1,9 @@
-import { app, BrowserWindow, Tray } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createWindow, getMainWindow, setQuitting } from './window'
 import { createTray } from './tray'
+import { destroyTray } from './utils/trayBounds'
 import { registerHotkey, unregisterHotkey } from './hotkey'
-
-let tray: Tray | null = null
 
 // Prevent a second launch from competing for the global hotkey/tray icon.
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
@@ -30,7 +29,7 @@ if (!gotSingleInstanceLock) {
     })
 
     createWindow()
-    tray = createTray()
+    createTray()
     registerHotkey()
 
     app.on('activate', function () {
@@ -42,7 +41,7 @@ if (!gotSingleInstanceLock) {
 
   app.on('before-quit', () => {
     setQuitting(true)
-    tray?.destroy()
+    destroyTray()
   })
 
   app.on('will-quit', () => {
