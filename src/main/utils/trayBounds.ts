@@ -1,3 +1,4 @@
+import { screen } from 'electron'
 import type { Point, Rectangle, Tray } from 'electron'
 
 let tray: Tray | null = null
@@ -22,4 +23,10 @@ export function pointInRect(point: Point, rect: Rectangle): boolean {
     point.y >= rect.y &&
     point.y <= rect.y + rect.height
   )
+}
+
+export function cursorOverTray(): boolean {
+  const bounds = getTrayBounds()
+  if (!bounds) return false
+  return pointInRect(screen.getCursorScreenPoint(), bounds)
 }

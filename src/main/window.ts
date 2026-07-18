@@ -2,7 +2,8 @@ import { shell, screen, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { getTrayBounds, pointInRect } from './utils/trayBounds'
+import { cursorOverTray } from './utils/trayBounds'
+import { computeWindowPosition } from './utils/windowPosition'
 
 let mainWindow: BrowserWindow | null = null
 let pinned = false
@@ -11,15 +12,18 @@ let readyToShow = false
 let pendingShow = false
 let primed = false
 
-function cursorOverTray(): boolean {
-  const bounds = getTrayBounds()
-  if (!bounds) return false
-  return pointInRect(screen.getCursorScreenPoint(), bounds)
-}
-
 function raiseWindow(): void {
   mainWindow?.moveTop()
   mainWindow?.focus()
+}
+
+function positionWindow(): void {
+  if (!mainWindow) return
+  const cursor = screen.getCursorScreenPoint()
+  const { workArea } = screen.getDisplayNearestPoint(cursor)
+  const { width, height } = mainWindow.getBounds()
+  const { x, y } = computeWindowPosition(workArea, { width, height })
+  mainWindow.setPosition(x, y)
 }
 
 function isTrulyVisible(): boolean {
@@ -42,8 +46,8 @@ function primePaint(): void {
 
 export function createWindow(): BrowserWindow {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 720,
+    height: 64,
     show: false,
     frame: false,
     alwaysOnTop: true,
@@ -123,6 +127,8 @@ export function showWindow(): void {
     pendingShow = true
     return
   }
+
+  if (!pinned) positionWindow()
   mainWindow.setOpacity(1)
   mainWindow.show()
   raiseWindow()
