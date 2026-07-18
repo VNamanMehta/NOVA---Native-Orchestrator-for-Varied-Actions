@@ -3,7 +3,14 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { cursorOverTray } from './utils/trayBounds'
-import { computeWindowPosition } from './utils/windowPosition'
+import {
+  clampContentHeight,
+  computeWindowPosition,
+  MIN_WINDOW_HEIGHT
+} from './utils/windowGeometry'
+
+const WINDOW_WIDTH = 720
+const RESIZE_THRESHOLD = 2
 
 let mainWindow: BrowserWindow | null = null
 let pinned = false
@@ -26,6 +33,16 @@ function positionWindow(): void {
   mainWindow.setPosition(x, y)
 }
 
+export function resizeToContent(contentHeight: number): void {
+  if (!mainWindow) return
+  const [x, y] = mainWindow.getPosition()
+  const [width, currentHeight] = mainWindow.getSize()
+  const { workArea } = screen.getDisplayMatching(mainWindow.getBounds())
+  const target = clampContentHeight(contentHeight, workArea, y)
+  if (Math.abs(target - currentHeight) < RESIZE_THRESHOLD) return
+  mainWindow.setBounds({ x, y, width, height: target })
+}
+
 function isTrulyVisible(): boolean {
   return !!mainWindow && mainWindow.isVisible() && mainWindow.getOpacity() > 0
 }
@@ -45,11 +62,16 @@ function primePaint(): void {
 }
 
 export function createWindow(): BrowserWindow {
+  readyToShow = false
+  pendingShow = false
+  primed = false
+
   mainWindow = new BrowserWindow({
-    width: 720,
-    height: 64,
+    width: WINDOW_WIDTH,
+    height: MIN_WINDOW_HEIGHT,
     show: false,
     frame: false,
+    resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     icon,

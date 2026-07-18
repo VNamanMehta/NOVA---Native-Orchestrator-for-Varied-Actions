@@ -1,9 +1,10 @@
 import { app, BrowserWindow } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
-import { createWindow, getMainWindow, setQuitting } from './window'
+import { createWindow, getMainWindow, setQuitting, showWindow } from './window'
 import { createTray } from './tray'
 import { destroyTray } from './utils/trayBounds'
 import { registerHotkey, unregisterHotkey } from './hotkey'
+import { registerIpcHandlers, unregisterIpcHandlers } from './ipc/handlers'
 
 // Prevent a second launch from competing for the global hotkey/tray icon.
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
@@ -14,11 +15,8 @@ if (!gotSingleInstanceLock) {
   // A second launch attempt was blocked — bring the existing window forward.
   app.on('second-instance', () => {
     const mainWindow = getMainWindow()
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore()
-      mainWindow.show()
-      mainWindow.focus()
-    }
+    if (mainWindow?.isMinimized()) mainWindow.restore()
+    showWindow()
   })
 
   app.whenReady().then(() => {
@@ -31,6 +29,7 @@ if (!gotSingleInstanceLock) {
     createWindow()
     createTray()
     registerHotkey()
+    registerIpcHandlers()
 
     app.on('activate', function () {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -46,5 +45,6 @@ if (!gotSingleInstanceLock) {
 
   app.on('will-quit', () => {
     unregisterHotkey()
+    unregisterIpcHandlers()
   })
 }
