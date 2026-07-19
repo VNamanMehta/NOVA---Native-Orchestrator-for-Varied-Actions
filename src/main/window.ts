@@ -6,7 +6,11 @@ import { cursorOverTray } from './utils/trayBounds'
 import {
   clampContentHeight,
   computeWindowPosition,
-  MIN_WINDOW_HEIGHT
+  resetBounds,
+  shouldApplyContentHeight,
+  MIN_WINDOW_HEIGHT,
+  MIN_WINDOW_WIDTH,
+  type SizeAuthority
 } from './utils/windowGeometry'
 
 const WINDOW_WIDTH = 720
@@ -18,6 +22,8 @@ let quitting = false
 let readyToShow = false
 let pendingShow = false
 let primed = false
+let sizeAuthority: SizeAuthority = 'content'
+let lastContentHeight = MIN_WINDOW_HEIGHT
 
 function raiseWindow(): void {
   mainWindow?.moveTop()
@@ -34,13 +40,24 @@ function positionWindow(): void {
 }
 
 export function resizeToContent(contentHeight: number): void {
+  lastContentHeight = contentHeight
   if (!mainWindow) return
+  if (!shouldApplyContentHeight(sizeAuthority, pinned)) return
   const [x, y] = mainWindow.getPosition()
   const [width, currentHeight] = mainWindow.getSize()
   const { workArea } = screen.getDisplayMatching(mainWindow.getBounds())
   const target = clampContentHeight(contentHeight, workArea, y)
   if (Math.abs(target - currentHeight) < RESIZE_THRESHOLD) return
   mainWindow.setBounds({ x, y, width, height: target })
+}
+
+export function resetWindowSize(): void {
+  if (!mainWindow || pinned) return
+  sizeAuthority = 'content'
+  const [x, y] = mainWindow.getPosition()
+  const { workArea } = screen.getDisplayMatching(mainWindow.getBounds())
+  const { width, height } = resetBounds(WINDOW_WIDTH, lastContentHeight, workArea, y)
+  mainWindow.setBounds({ x, y, width, height })
 }
 
 function isTrulyVisible(): boolean {
@@ -65,13 +82,17 @@ export function createWindow(): BrowserWindow {
   readyToShow = false
   pendingShow = false
   primed = false
+  sizeAuthority = 'content'
+  lastContentHeight = MIN_WINDOW_HEIGHT
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,
     height: MIN_WINDOW_HEIGHT,
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
     show: false,
     frame: false,
-    resizable: false,
+    resizable: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     icon,
@@ -113,6 +134,10 @@ export function createWindow(): BrowserWindow {
     mainWindow.hide()
   })
 
+  mainWindow.on('will-resize', () => {
+    sizeAuthority = 'manual'
+  })
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -136,6 +161,7 @@ export function isPinned(): boolean {
 
 export function setPinned(value: boolean): void {
   pinned = value
+  mainWindow?.setResizable(!value)
   if (!value) return
   setTimeout(() => {
     if (!pinned) return

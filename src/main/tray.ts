@@ -3,6 +3,7 @@ import icon from '../../resources/icon.png?asset'
 import {
   hideIfMenuDismissed,
   isPinned,
+  resetWindowSize,
   setPinned,
   showWindow,
   toggleWindowVisibility
@@ -20,6 +21,11 @@ function buildMenu(): Menu {
       type: 'checkbox',
       checked: isPinned(),
       click: (menuItem) => setPinned(menuItem.checked)
+    },
+    {
+      label: 'Reset window size',
+      enabled: !isPinned(),
+      click: () => resetWindowSize()
     },
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() }

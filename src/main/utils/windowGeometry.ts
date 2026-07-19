@@ -2,6 +2,7 @@ import type { Rectangle } from 'electron'
 
 export const VERTICAL_ANCHOR = 1 / 3 // launcher sits in the upper third of the display
 export const MIN_WINDOW_HEIGHT = 64
+export const MIN_WINDOW_WIDTH = 480
 const MAX_HEIGHT_FRACTION = 0.5 // cap window at 50% of the display's work area
 
 function clamp(value: number, min: number, max: number): number {
@@ -40,4 +41,22 @@ export function clampContentHeight(
   const maxByBottom = workArea.y + workArea.height - windowTop
   const maxHeight = Math.max(MIN_WINDOW_HEIGHT, Math.min(maxByFraction, maxByBottom))
   return Math.round(clamp(contentHeight, MIN_WINDOW_HEIGHT, maxHeight))
+}
+
+export type SizeAuthority = 'content' | 'manual'
+
+export function shouldApplyContentHeight(authority: SizeAuthority, pinned: boolean): boolean {
+  return authority === 'content' && !pinned
+}
+
+export function resetBounds(
+  defaultWidth: number,
+  contentHeight: number,
+  workArea: Rectangle,
+  windowTop: number
+): { width: number; height: number } {
+  return {
+    width: defaultWidth,
+    height: clampContentHeight(contentHeight, workArea, windowTop)
+  }
 }
