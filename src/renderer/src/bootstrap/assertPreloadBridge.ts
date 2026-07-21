@@ -1,15 +1,23 @@
-/**
- * The preload bridge is a boot invariant: if contextBridge never exposed
- * window.api, every feature is broken. Asserting once here is what lets the
- * rest of the renderer call window.api directly, with no defensive chaining
- * that would degrade into a silent no-op.
- *
- * Renders a visible message into the mount container before throwing, so the
- * failure is legible to the user as well as the console.
- */
+// Asserting the bridge once at boot is what lets the rest of the renderer call
+// window.api with no defensive chaining. Checks leaves, not just `api`, since a
+// partial bridge would otherwise pass here and crash at the call site.
+// Keep in sync with NovaApi.
+const REQUIRED_LEAVES = ['window.reportContentHeight', 'chat.send'] as const
+
 export function assertPreloadBridge(container: HTMLElement): void {
-  if (window.api) return
+  const missing = REQUIRED_LEAVES.filter((path) => typeof resolve(window.api, path) !== 'function')
+
+  if (missing.length === 0) return
 
   container.textContent = 'Nova failed to start: the preload bridge is unavailable.'
-  throw new Error('Preload bridge unavailable: window.api was not exposed.')
+  throw new Error(`Preload bridge unavailable: window.api is missing ${missing.join(', ')}.`)
+}
+
+function resolve(root: unknown, path: string): unknown {
+  return path
+    .split('.')
+    .reduce<unknown>(
+      (value, key) => (value == null ? undefined : (value as Record<string, unknown>)[key]),
+      root
+    )
 }

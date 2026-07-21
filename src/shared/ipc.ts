@@ -10,6 +10,8 @@ export interface Message {
 export type IpcResult<T> =
   { ok: true; value: T } | { ok: false; error: { message: string; code?: string } }
 
+export type IpcResultValue<R> = R extends { ok: true; value: infer V } ? V : never
+
 // --- 1. renderer → main, fire-and-forget -------------------------------------
 
 export const RendererToMainChannels = {
@@ -39,6 +41,19 @@ export interface ResponsePayloads {
   [RequestChannels.chatSend]: IpcResult<Message>
 }
 
+// Renderer payloads arrive as `unknown`. Validators throw on bad input;
+// handleRequest applies them so handlers never re-check by hand.
+export const RequestValidators: {
+  [C in RequestChannel]: (payload: unknown) => RequestPayloads[C]
+} = {
+  [RequestChannels.chatSend]: (payload) => {
+    if (typeof payload !== 'string') {
+      throw new Error('chat:send expects a string payload')
+    }
+    return payload
+  }
+}
+
 // --- 3. main → renderer, push (reserved — not implemented in Phase 0) --------
 
 export const MainToRendererChannels = {
@@ -57,15 +72,20 @@ export interface MainToRendererPayloads {
   }
 }
 
+// TODO(Phase 1/2): outbound half only. Still needs a renderer->main approve/deny
+// channel, a correlation id (concurrent tasks in Phase 4), and on/off on NovaApi.
+
 // --- The bridge surface exposed to the renderer as `window.api` --------------
 
 export interface NovaApi {
   window: {
-    reportContentHeight: (height: RendererToMainPayloads['renderer->main:content-height']) => void
+    reportContentHeight: (
+      height: RendererToMainPayloads[typeof RendererToMainChannels.contentHeight]
+    ) => void
   }
   chat: {
     send: (
-      text: RequestPayloads['renderer->main:chat-send']
-    ) => Promise<ResponsePayloads['renderer->main:chat-send']>
+      text: RequestPayloads[typeof RequestChannels.chatSend]
+    ) => Promise<ResponsePayloads[typeof RequestChannels.chatSend]>
   }
 }

@@ -1,7 +1,7 @@
 import { ipcMain, type IpcMainEvent } from 'electron'
 import { RendererToMainChannels, RequestChannels } from '../../shared/ipc'
 import { resizeToContent } from '../window'
-import { runSafely } from './safeHandle'
+import { handleRequest } from './handleRequest'
 import { echo } from './chat'
 
 export function registerIpcHandlers(): void {
@@ -11,14 +11,7 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  ipcMain.handle(RequestChannels.chatSend, (_event, text: unknown) =>
-    runSafely(() => {
-      if (typeof text !== 'string') {
-        throw new Error('chat:send expects a string payload')
-      }
-      return echo(text)
-    })
-  )
+  handleRequest(RequestChannels.chatSend, (text) => echo(text))
 }
 
 export function unregisterIpcHandlers(): void {

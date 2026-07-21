@@ -1,10 +1,10 @@
 import type { IpcResult } from '../../shared/ipc'
 
-/**
- * Runs an async handler and converts the outcome into an IpcResult envelope.
- * A thrown error becomes { ok: false } instead of a mangled invoke rejection.
- * Every renderer->main request handler funnels through this.
- */
+// Converts a thrown error into { ok: false } rather than a mangled invoke rejection.
+//
+// TODO(Phase 1): forwards err.message verbatim. Provider SDKs embed request URLs,
+// bodies, and sometimes credentials in messages — map those onto IpcResult.code
+// before the first provider adapter lands.
 export async function runSafely<Res>(fn: () => Promise<Res>): Promise<IpcResult<Res>> {
   try {
     return { ok: true, value: await fn() }
