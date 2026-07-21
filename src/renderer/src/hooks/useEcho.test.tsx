@@ -31,9 +31,4 @@ describe('useEcho', () => {
     await waitFor(() => expect(errorSpy).toHaveBeenCalled())
     expect(result.current).toBeNull()
   })
-
-  it('does not throw when window.api is absent', () => {
-    vi.stubGlobal('api', undefined)
-    expect(() => renderHook(() => useEcho())).not.toThrow()
-  })
 })

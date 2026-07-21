@@ -11,8 +11,7 @@ export function useEcho(): Message | null {
 
   useEffect(() => {
     let cancelled = false
-    const pending = window.api?.chat?.send('ping')
-    pending?.then((result) => {
+    window.api.chat.send('ping').then((result) => {
       if (cancelled) return
       if (result.ok) {
         setReply(result.value)
