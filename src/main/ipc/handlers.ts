@@ -12,7 +12,12 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle(RequestChannels.chatSend, (_event, text: unknown) =>
-    runSafely(() => echo(String(text)))
+    runSafely(() => {
+      if (typeof text !== 'string') {
+        throw new Error('chat:send expects a string payload')
+      }
+      return echo(text)
+    })
   )
 }
 
