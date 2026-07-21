@@ -1,8 +1,15 @@
 import { ipcRenderer } from 'electron'
-import { RendererToMainChannels, type NovaApi } from '../shared/ipc'
+import { RendererToMainChannels, RequestChannels, type NovaApi } from '../shared/ipc'
 
 export const api: NovaApi = {
-  reportContentHeight(height) {
-    ipcRenderer.send(RendererToMainChannels.contentHeight, height)
+  window: {
+    reportContentHeight(height) {
+      ipcRenderer.send(RendererToMainChannels.contentHeight, height)
+    }
+  },
+  chat: {
+    send(text) {
+      return ipcRenderer.invoke(RequestChannels.chatSend, text)
+    }
   }
 }

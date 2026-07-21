@@ -6,7 +6,7 @@ export function useReportContentHeight(ref: RefObject<HTMLElement | null>): void
     if (!element) return
 
     const report = (): void => {
-      window.api?.reportContentHeight?.(element.getBoundingClientRect().height)
+      window.api.window.reportContentHeight(element.getBoundingClientRect().height)
     }
 
     report()
