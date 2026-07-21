@@ -1,6 +1,8 @@
 import { ipcMain, type IpcMainEvent } from 'electron'
-import { RendererToMainChannels } from '../../shared/ipc'
+import { RendererToMainChannels, RequestChannels } from '../../shared/ipc'
 import { resizeToContent } from '../window'
+import { runSafely } from './safeHandle'
+import { echo } from './chat'
 
 export function registerIpcHandlers(): void {
   ipcMain.on(RendererToMainChannels.contentHeight, (_event: IpcMainEvent, height: unknown) => {
@@ -8,8 +10,13 @@ export function registerIpcHandlers(): void {
       resizeToContent(height)
     }
   })
+
+  ipcMain.handle(RequestChannels.chatSend, (_event, text: unknown) =>
+    runSafely(() => echo(String(text)))
+  )
 }
 
 export function unregisterIpcHandlers(): void {
   ipcMain.removeAllListeners(RendererToMainChannels.contentHeight)
+  ipcMain.removeHandler(RequestChannels.chatSend)
 }
