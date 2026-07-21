@@ -1,7 +1,7 @@
 import { ipcMain, type IpcMainEvent } from 'electron'
 import { RendererToMainChannels, RequestChannels } from '../../shared/ipc'
 import { resizeToContent } from '../window'
-import { handleRequest } from './handleRequest'
+import { handleRequest, unregisterRequestHandlers } from './handleRequest'
 import { echo } from './chat'
 
 export function registerIpcHandlers(): void {
@@ -16,5 +16,5 @@ export function registerIpcHandlers(): void {
 
 export function unregisterIpcHandlers(): void {
   ipcMain.removeAllListeners(RendererToMainChannels.contentHeight)
-  ipcMain.removeHandler(RequestChannels.chatSend)
+  unregisterRequestHandlers()
 }

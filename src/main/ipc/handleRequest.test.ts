@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RequestChannels, type IpcResult, type Message } from '../../shared/ipc'
-import { handleRequest } from './handleRequest'
+import { handleRequest, unregisterRequestHandlers } from './handleRequest'
 
 const handlers = new Map<string, (event: unknown, payload: unknown) => unknown>()
 
@@ -8,6 +8,9 @@ vi.mock('electron', () => ({
   ipcMain: {
     handle: (channel: string, listener: (event: unknown, payload: unknown) => unknown) => {
       handlers.set(channel, listener)
+    },
+    removeHandler: (channel: string) => {
+      handlers.delete(channel)
     }
   }
 }))
@@ -20,6 +23,8 @@ function invoke(channel: string, payload: unknown): Promise<IpcResult<Message>> 
 }
 
 beforeEach(() => {
+  // The channel registry is module state; clear it so tests don't leak.
+  unregisterRequestHandlers()
   handlers.clear()
 })
 
@@ -56,5 +61,37 @@ describe('handleRequest', () => {
       ok: false,
       error: { message: 'handler exploded' }
     })
+  })
+})
+
+describe('unregisterRequestHandlers', () => {
+  it('removes every channel that was registered', () => {
+    handleRequest(RequestChannels.chatSend, async (text) => ({
+      role: 'assistant' as const,
+      content: text
+    }))
+    expect(handlers.has(RequestChannels.chatSend)).toBe(true)
+
+    unregisterRequestHandlers()
+
+    expect(handlers.size).toBe(0)
+  })
+
+  it('is a no-op when nothing is registered', () => {
+    expect(() => unregisterRequestHandlers()).not.toThrow()
+  })
+
+  it('forgets channels, so a second teardown does not re-remove them', () => {
+    handleRequest(RequestChannels.chatSend, async (text) => ({
+      role: 'assistant' as const,
+      content: text
+    }))
+    unregisterRequestHandlers()
+
+    // Re-register out of band: a stale registry would wrongly remove this.
+    handlers.set(RequestChannels.chatSend, () => undefined)
+    unregisterRequestHandlers()
+
+    expect(handlers.has(RequestChannels.chatSend)).toBe(true)
   })
 })
