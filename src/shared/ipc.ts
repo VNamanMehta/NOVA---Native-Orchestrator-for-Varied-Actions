@@ -60,5 +60,12 @@ export interface MainToRendererPayloads {
 // --- The bridge surface exposed to the renderer as `window.api` --------------
 
 export interface NovaApi {
-  reportContentHeight: (height: RendererToMainPayloads['renderer->main:content-height']) => void
+  window: {
+    reportContentHeight: (height: RendererToMainPayloads['renderer->main:content-height']) => void
+  }
+  chat: {
+    send: (
+      text: RequestPayloads['renderer->main:chat-send']
+    ) => Promise<ResponsePayloads['renderer->main:chat-send']>
+  }
 }
