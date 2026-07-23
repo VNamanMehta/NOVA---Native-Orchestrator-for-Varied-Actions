@@ -59,6 +59,7 @@ export function useConversation(): UseConversation {
       if (index <= 0) return
       const userMessage = messages[index - 1]
       if (userMessage.role !== 'user') return
+      if (messages[index].status === 'pending') return
 
       setMessages((prev) =>
         prev.map((m) =>

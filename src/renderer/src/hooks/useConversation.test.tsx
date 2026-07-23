@@ -105,4 +105,33 @@ describe('useConversation', () => {
     )
     expect(send).toHaveBeenNthCalledWith(2, 'hello')
   })
+
+  it('ignores a second retry while the first retry is still pending', async () => {
+    let resolveRetry!: (value: Awaited<ReturnType<NovaApi['chat']['send']>>) => void
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, error: { message: 'boom' } })
+      .mockImplementationOnce(
+        () => new Promise<Awaited<ReturnType<NovaApi['chat']['send']>>>((r) => (resolveRetry = r))
+      )
+    stubApi(send)
+
+    const { result } = renderHook(() => useConversation())
+    act(() => result.current.send('hello'))
+    await waitFor(() => expect(result.current.messages[1].status).toBe('error'))
+
+    const assistantId = result.current.messages[1].id
+    act(() => result.current.retry(assistantId))
+    expect(result.current.messages[1].status).toBe('pending')
+
+    act(() => result.current.retry(assistantId))
+
+    expect(send).toHaveBeenCalledTimes(2)
+
+    // avoid an unhandled resolve after the test
+    await act(async () => {
+      resolveRetry({ ok: true, value: { role: 'assistant', content: 'ok now' } })
+      await Promise.resolve()
+    })
+  })
 })
