@@ -13,12 +13,6 @@ describe('MessageItem', () => {
     expect(item).toHaveTextContent('hello')
   })
 
-  it('renders a thinking indicator for a pending assistant message', () => {
-    const msg: ChatMessage = { id: '2', role: 'assistant', content: '', status: 'pending' }
-    render(<MessageItem message={msg} onRetry={vi.fn()} />)
-    expect(screen.getByTestId('pending-indicator')).toBeInTheDocument()
-  })
-
   it('renders the error text and a Retry button that fires onRetry with the id', () => {
     const onRetry = vi.fn()
     const msg: ChatMessage = { id: '3', role: 'assistant', content: 'boom', status: 'error' }

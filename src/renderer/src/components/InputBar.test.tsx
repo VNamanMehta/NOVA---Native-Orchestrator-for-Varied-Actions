@@ -31,4 +31,18 @@ describe('InputBar', () => {
     render(<InputBar onSend={vi.fn()} disabled={true} />)
     expect(screen.getByRole('textbox', { name: 'Message Nova' })).toBeDisabled()
   })
+
+  it('focuses the input on mount', () => {
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+    expect(screen.getByRole('textbox', { name: 'Message Nova' })).toHaveFocus()
+  })
+
+  it('restores focus when it re-enables after a pending turn', () => {
+    const { rerender } = render(<InputBar onSend={vi.fn()} disabled={true} />)
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    expect(input).not.toHaveFocus()
+
+    rerender(<InputBar onSend={vi.fn()} disabled={false} />)
+    expect(input).toHaveFocus()
+  })
 })

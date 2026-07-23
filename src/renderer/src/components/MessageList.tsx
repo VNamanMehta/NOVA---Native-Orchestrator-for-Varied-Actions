@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { ChatMessage } from '../types/chat'
 import { MessageItem } from './MessageItem'
 
@@ -7,13 +8,23 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, onRetry }: MessageListProps): React.JSX.Element | null {
-  if (messages.length === 0) return null
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const visible = messages.filter((message) => message.status !== 'pending')
 
-  const newestFirst = [...messages].reverse()
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages])
+
+  if (visible.length === 0) return null
 
   return (
-    <div data-testid="message-list" className="flex flex-col gap-2 px-3 py-2">
-      {newestFirst.map((message) => (
+    <div
+      ref={scrollRef}
+      data-testid="message-list"
+      className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-3 [scrollbar-gutter:stable]"
+    >
+      {visible.map((message) => (
         <MessageItem key={message.id} message={message} onRetry={onRetry} />
       ))}
     </div>

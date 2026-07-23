@@ -21,4 +21,24 @@ describe('ChatWindow', () => {
     render(<ChatWindow messages={messages} isPending={true} onSend={vi.fn()} onRetry={vi.fn()} />)
     expect(screen.getByRole('textbox', { name: 'Message Nova' })).toBeDisabled()
   })
+
+  it('renders the input below the message list', () => {
+    render(<ChatWindow messages={messages} isPending={false} onSend={vi.fn()} onRetry={vi.fn()} />)
+    const list = screen.getByTestId('message-list')
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    expect(list.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows the thinking indicator below the input while pending', () => {
+    render(<ChatWindow messages={messages} isPending={true} onSend={vi.fn()} onRetry={vi.fn()} />)
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    const indicator = screen.getByTestId('pending-indicator')
+    expect(indicator).toHaveTextContent('Nova is thinking…')
+    expect(input.compareDocumentPosition(indicator) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('hides the thinking indicator when not pending', () => {
+    render(<ChatWindow messages={messages} isPending={false} onSend={vi.fn()} onRetry={vi.fn()} />)
+    expect(screen.queryByTestId('pending-indicator')).not.toBeInTheDocument()
+  })
 })

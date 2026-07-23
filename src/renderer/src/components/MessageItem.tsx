@@ -22,12 +22,6 @@ export function MessageItem({ message, onRetry }: MessageItemProps): React.JSX.E
           isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
         )}
       >
-        {message.status === 'pending' && (
-          <span data-testid="pending-indicator" className="animate-pulse text-muted-foreground">
-            Nova is thinking…
-          </span>
-        )}
-
         {message.status === 'error' && (
           <span className="flex flex-col items-start gap-1">
             <span className="text-destructive">{message.content}</span>

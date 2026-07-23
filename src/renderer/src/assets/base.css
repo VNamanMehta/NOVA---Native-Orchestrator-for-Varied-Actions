@@ -29,9 +29,23 @@
   margin: 0;
 }
 
-/* Opaque dark surface for now. When the overlay window's `transparent` flag is
-   enabled (window-hardening increment), switch this to `transparent` for true
-   desktop see-through. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html,
+body {
+  overflow: hidden;
+}
+
 body {
   min-height: 100vh;
   color: var(--foreground);

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 interface InputBarProps {
   onSend: (text: string) => void
@@ -7,6 +7,11 @@ interface InputBarProps {
 
 export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!disabled) inputRef.current?.focus()
+  }, [disabled])
 
   const submit = (event: FormEvent): void => {
     event.preventDefault()
@@ -17,8 +22,9 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
   }
 
   return (
-    <form onSubmit={submit} className="flex h-16 shrink-0 items-center px-4">
+    <form onSubmit={submit} className="flex h-16 shrink-0 items-center border-t border-border px-4">
       <input
+        ref={inputRef}
         aria-label="Message Nova"
         placeholder="Ask Nova…"
         value={draft}
