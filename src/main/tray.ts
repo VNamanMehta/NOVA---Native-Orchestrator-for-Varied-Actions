@@ -23,7 +23,7 @@ function buildMenu(): Menu {
       click: (menuItem) => setPinned(menuItem.checked)
     },
     {
-      label: 'Reset window size',
+      label: 'Auto-size to content',
       enabled: !isPinned(),
       click: () => resetWindowSize()
     },
