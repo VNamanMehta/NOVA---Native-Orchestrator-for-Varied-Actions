@@ -6,7 +6,8 @@ import {
   resetWindowSize,
   setPinned,
   showWindow,
-  toggleWindowVisibility
+  toggleWindowVisibility,
+  whenReady
 } from './window'
 import { registerTray } from './utils/trayBounds'
 import { pushOpenSettings } from './ipc/push'
@@ -21,7 +22,11 @@ function buildMenu(): Menu {
       label: 'Open Settings',
       click: () => {
         showWindow()
-        pushOpenSettings()
+        // The renderer's push listener is set up in a React effect, which
+        // only exists once the window has actually painted at least once.
+        // Gate the push on that instead of firing it into a not-yet-mounted
+        // renderer, where it would be silently dropped.
+        whenReady(() => pushOpenSettings())
       }
     },
     {

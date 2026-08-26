@@ -24,6 +24,7 @@ let pendingShow = false
 let primed = false
 let sizeAuthority: SizeAuthority = 'content'
 let lastContentHeight = MIN_WINDOW_HEIGHT
+let readyCallbacks: Array<() => void> = []
 
 function raiseWindow(): void {
   mainWindow?.moveTop()
@@ -84,6 +85,7 @@ export function createWindow(): BrowserWindow {
   primed = false
   sizeAuthority = 'content'
   lastContentHeight = MIN_WINDOW_HEIGHT
+  readyCallbacks = []
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,
@@ -105,6 +107,7 @@ export function createWindow(): BrowserWindow {
 
   mainWindow.once('ready-to-show', () => {
     readyToShow = true
+    readyCallbacks.splice(0).forEach((callback) => callback())
     if (pendingShow) {
       pendingShow = false
       showWindow()
@@ -149,6 +152,19 @@ export function createWindow(): BrowserWindow {
 
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow
+}
+
+// Runs `callback` once the window's content has actually painted at least
+// once — immediately if that's already happened, otherwise queued to run
+// when it does. Use this to gate anything that assumes the renderer has
+// mounted (e.g. a main->renderer push whose only listener is set up in a
+// React effect), the same way showWindow() itself defers via pendingShow.
+export function whenReady(callback: () => void): void {
+  if (readyToShow) {
+    callback()
+  } else {
+    readyCallbacks.push(callback)
+  }
 }
 
 export function setQuitting(value: boolean): void {
