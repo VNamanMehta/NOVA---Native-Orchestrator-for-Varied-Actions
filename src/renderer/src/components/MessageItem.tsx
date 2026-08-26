@@ -4,9 +4,14 @@ import { cn } from '../lib/utils'
 interface MessageItemProps {
   message: ChatMessage
   onRetry: (id: string) => void
+  retryDisabled?: boolean
 }
 
-export function MessageItem({ message, onRetry }: MessageItemProps): React.JSX.Element {
+export function MessageItem({
+  message,
+  onRetry,
+  retryDisabled = false
+}: MessageItemProps): React.JSX.Element {
   const isUser = message.role === 'user'
 
   return (
@@ -29,7 +34,8 @@ export function MessageItem({ message, onRetry }: MessageItemProps): React.JSX.E
               <button
                 type="button"
                 onClick={() => onRetry(message.id)}
-                className="text-xs underline"
+                disabled={retryDisabled}
+                className="text-xs underline disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Retry
               </button>

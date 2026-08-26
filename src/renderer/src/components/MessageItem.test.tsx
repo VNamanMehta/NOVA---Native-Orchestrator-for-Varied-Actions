@@ -22,4 +22,15 @@ describe('MessageItem', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(onRetry).toHaveBeenCalledWith('3')
   })
+
+  it('disables the Retry button and ignores clicks when retryDisabled is set', () => {
+    const onRetry = vi.fn()
+    const msg: ChatMessage = { id: '3', role: 'assistant', content: 'boom', status: 'error' }
+    render(<MessageItem message={msg} onRetry={onRetry} retryDisabled />)
+
+    const button = screen.getByRole('button', { name: 'Retry' })
+    expect(button).toBeDisabled()
+    fireEvent.click(button)
+    expect(onRetry).not.toHaveBeenCalled()
+  })
 })

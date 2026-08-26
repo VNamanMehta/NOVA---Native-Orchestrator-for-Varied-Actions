@@ -53,13 +53,15 @@ export function useConversation(): UseConversation {
     [runTurn]
   )
 
+  const isPending = messages.some((m) => m.status === 'pending')
+
   const retry = useCallback(
     (assistantMessageId: string) => {
+      if (isPending) return
       const index = messages.findIndex((m) => m.id === assistantMessageId)
       if (index <= 0) return
       const userMessage = messages[index - 1]
       if (userMessage.role !== 'user') return
-      if (messages[index].status === 'pending') return
 
       setMessages((prev) =>
         prev.map((m) =>
@@ -68,10 +70,8 @@ export function useConversation(): UseConversation {
       )
       runTurn(userMessage.content, assistantMessageId)
     },
-    [messages, runTurn]
+    [messages, isPending, runTurn]
   )
-
-  const isPending = messages.some((m) => m.status === 'pending')
 
   return { messages, isPending, send, retry }
 }

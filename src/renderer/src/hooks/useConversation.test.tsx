@@ -134,4 +134,37 @@ describe('useConversation', () => {
       await Promise.resolve()
     })
   })
+
+  it('ignores retrying an older errored message while a newer send is still pending', async () => {
+    let resolveSecondSend!: (value: Awaited<ReturnType<NovaApi['chat']['send']>>) => void
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, error: { message: 'boom' } })
+      .mockImplementationOnce(
+        () =>
+          new Promise<Awaited<ReturnType<NovaApi['chat']['send']>>>((r) => (resolveSecondSend = r))
+      )
+    stubApi(send)
+
+    const { result } = renderHook(() => useConversation())
+
+    act(() => result.current.send('first'))
+    await waitFor(() => expect(result.current.messages[1].status).toBe('error'))
+    const firstAssistantId = result.current.messages[1].id
+
+    act(() => result.current.send('second'))
+    expect(result.current.isPending).toBe(true)
+
+    act(() => result.current.retry(firstAssistantId))
+
+    // still just the two original sends — retry was ignored while "second" is in flight
+    expect(send).toHaveBeenCalledTimes(2)
+    expect(result.current.messages[1]).toMatchObject({ status: 'error' })
+
+    // avoid an unhandled resolve after the test
+    await act(async () => {
+      resolveSecondSend({ ok: true, value: { role: 'assistant', content: 'ok' } })
+      await Promise.resolve()
+    })
+  })
 })

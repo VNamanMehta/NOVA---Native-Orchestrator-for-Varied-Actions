@@ -11,12 +11,12 @@ const chronological: ChatMessage[] = [
 
 describe('MessageList', () => {
   it('renders nothing when there are no messages', () => {
-    const { container } = render(<MessageList messages={[]} onRetry={vi.fn()} />)
+    const { container } = render(<MessageList messages={[]} isPending={false} onRetry={vi.fn()} />)
     expect(container).toBeEmptyDOMElement()
   })
 
   it('renders messages oldest-first, newest last', () => {
-    render(<MessageList messages={chronological} onRetry={vi.fn()} />)
+    render(<MessageList messages={chronological} isPending={false} onRetry={vi.fn()} />)
     const items = screen.getAllByTestId('message-item')
     expect(items.map((i) => i.textContent)).toEqual(['first', 'second', 'third'])
   })
@@ -26,7 +26,7 @@ describe('MessageList', () => {
       { id: 'a', role: 'user', content: 'hi', status: 'complete' },
       { id: 'b', role: 'assistant', content: '', status: 'pending' }
     ]
-    render(<MessageList messages={withPending} onRetry={vi.fn()} />)
+    render(<MessageList messages={withPending} isPending onRetry={vi.fn()} />)
     const items = screen.getAllByTestId('message-item')
     expect(items).toHaveLength(1)
     expect(items[0]).toHaveTextContent('hi')
@@ -36,7 +36,7 @@ describe('MessageList', () => {
     const onlyPending: ChatMessage[] = [
       { id: 'a', role: 'assistant', content: '', status: 'pending' }
     ]
-    const { container } = render(<MessageList messages={onlyPending} onRetry={vi.fn()} />)
+    const { container } = render(<MessageList messages={onlyPending} isPending onRetry={vi.fn()} />)
     expect(container).toBeEmptyDOMElement()
   })
 })
