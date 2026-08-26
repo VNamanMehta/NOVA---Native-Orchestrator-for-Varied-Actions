@@ -51,4 +51,22 @@ describe('secrets', () => {
     expect(getApiKey(dir, 'grok')).toBe('grok-key')
     expect(getApiKey(dir, 'anthropic')).toBe('anthropic-key')
   })
+
+  it('treats an undecryptable saved file as no key, rather than throwing', () => {
+    setApiKey(dir, 'grok', 'sk-test-123')
+    decryptString.mockImplementationOnce(() => {
+      throw new Error('DPAPI: key not available on this machine/user')
+    })
+
+    expect(getApiKey(dir, 'grok')).toBeNull()
+  })
+
+  it('reports hasApiKey false for an undecryptable saved file', () => {
+    setApiKey(dir, 'grok', 'sk-test-123')
+    decryptString.mockImplementationOnce(() => {
+      throw new Error('DPAPI: key not available on this machine/user')
+    })
+
+    expect(hasApiKey(dir, 'grok')).toBe(false)
+  })
 })
