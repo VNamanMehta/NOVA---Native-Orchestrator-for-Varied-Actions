@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import type { NovaApi } from './src/shared/ipc'
+import { useAppStore } from './src/renderer/src/store/appStore'
 
 // Renderer code calls window.api with no defensive chaining, so tests need the
 // bridge present. Typed as NovaApi so the stub can't drift from the real shape.
@@ -36,4 +37,5 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  useAppStore.setState(useAppStore.getInitialState(), true)
 })
