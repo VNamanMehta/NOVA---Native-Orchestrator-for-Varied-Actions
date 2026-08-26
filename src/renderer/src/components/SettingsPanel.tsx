@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { isProviderEnabled, type ProviderId } from '../../../shared/domain'
+import { ALL_PROVIDERS, isProviderEnabled, type ProviderId } from '../../../shared/domain'
 import { useAppStore } from '../store/appStore'
 import { cn } from '../lib/utils'
 
@@ -9,8 +9,6 @@ const PROVIDER_LABELS: Record<ProviderId, string> = {
   openai: 'OpenAI',
   ollama: 'Ollama (local)'
 }
-
-const ALL_PROVIDERS: ProviderId[] = ['grok', 'anthropic', 'openai', 'ollama']
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
