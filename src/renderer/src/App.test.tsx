@@ -1,10 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { useAppStore } from './store/appStore'
 import App from './App'
 
 // The default createApiStub (vitest.setup.ts) echoes the sent text back as the
 // assistant reply, so a full send round-trip is observable without extra stubs.
+
+beforeEach(() => {
+  useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: true } })
+})
+
 describe('App', () => {
   it('renders the input bar', () => {
     render(<App />)
