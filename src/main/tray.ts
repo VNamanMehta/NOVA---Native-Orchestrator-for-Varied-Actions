@@ -9,12 +9,20 @@ import {
   toggleWindowVisibility
 } from './window'
 import { registerTray } from './utils/trayBounds'
+import { pushOpenSettings } from './ipc/push'
 
 function buildMenu(): Menu {
   return Menu.buildFromTemplate([
     {
       label: 'Show Nova',
       click: () => showWindow()
+    },
+    {
+      label: 'Open Settings',
+      click: () => {
+        showWindow()
+        pushOpenSettings()
+      }
     },
     {
       label: 'Pin Nova',
