@@ -15,6 +15,17 @@ export function createApiStub(): NovaApi {
         ok: true as const,
         value: { role: 'assistant' as const, content: text }
       }))
+    },
+    settings: {
+      get: vi.fn(async () => ({
+        ok: true as const,
+        value: { activeProvider: 'grok' as const, apiKeyConfigured: true }
+      })),
+      setApiKey: vi.fn(async () => ({ ok: true as const, value: undefined })),
+      setActiveProvider: vi.fn(async () => ({ ok: true as const, value: undefined }))
+    },
+    events: {
+      on: vi.fn(() => () => {})
     }
   }
 }
