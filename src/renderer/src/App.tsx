@@ -1,16 +1,16 @@
 import { useRef } from 'react'
 import { useReportContentHeight } from './hooks/useReportContentHeight'
-import { useEcho } from './hooks/useEcho'
+import { useConversation } from './hooks/useConversation'
+import { ChatWindow } from './components/ChatWindow'
 
 function App(): React.JSX.Element {
   const contentRef = useRef<HTMLDivElement>(null)
   useReportContentHeight(contentRef)
-  const echoReply = useEcho()
+  const { messages, isPending, send, retry } = useConversation()
 
   return (
     <div ref={contentRef}>
-      Nova
-      {echoReply && <span data-testid="echo-reply">{echoReply.content}</span>}
+      <ChatWindow messages={messages} isPending={isPending} onSend={send} onRetry={retry} />
     </div>
   )
 }

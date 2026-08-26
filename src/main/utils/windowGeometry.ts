@@ -1,9 +1,9 @@
 import type { Rectangle } from 'electron'
+import { MAX_HEIGHT_FRACTION } from '../../shared/layout'
 
 export const VERTICAL_ANCHOR = 1 / 3 // launcher sits in the upper third of the display
 export const MIN_WINDOW_HEIGHT = 64
 export const MIN_WINDOW_WIDTH = 480
-const MAX_HEIGHT_FRACTION = 0.5 // cap window at 50% of the display's work area
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(value, max))
