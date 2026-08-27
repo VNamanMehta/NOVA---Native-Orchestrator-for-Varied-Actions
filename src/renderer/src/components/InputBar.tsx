@@ -37,9 +37,8 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
     return () => clearTimeout(timer)
   }, [shakeCount])
 
-  // The clear happens in submit() (an event handler, not an effect); this
-  // effect only schedules the deferred re-set, so a repeated identical
-  // announcement is still a genuine DOM change a screen reader picks up.
+  // submit() clears the announcement; this effect only re-sets it deferred,
+  // so a repeated identical message still triggers a real DOM mutation.
   useEffect(() => {
     if (shakeCount === 0) return
     const raf = requestAnimationFrame(() => setAnnouncement(BLOCKED_SEND_MESSAGE))

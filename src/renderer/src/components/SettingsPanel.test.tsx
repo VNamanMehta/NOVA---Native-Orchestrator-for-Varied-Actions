@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { createApiStub } from '../../../../vitest.setup'
+import { ENCRYPTION_UNAVAILABLE_MESSAGE } from '../../../main/config/secrets'
 import { useAppStore } from '../store/appStore'
 import { SettingsPanel } from './SettingsPanel'
 
@@ -80,6 +81,26 @@ describe('SettingsPanel', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => expect(screen.getByTestId('save-error')).toHaveTextContent('boom'))
+  })
+
+  it('surfaces the real encryption-unavailable message when OS encryption is off', async () => {
+    const setApiKey = vi.fn(async () => ({
+      ok: false as const,
+      error: { message: ENCRYPTION_UNAVAILABLE_MESSAGE }
+    }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    const user = userEvent.setup()
+    render(<SettingsPanel />)
+
+    await user.type(screen.getByPlaceholderText('Paste your API key'), 'sk-test-123')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('save-error')).toHaveTextContent(ENCRYPTION_UNAVAILABLE_MESSAGE)
+    )
   })
 
   it('auto-dismisses the saved confirmation after 2 seconds', async () => {
