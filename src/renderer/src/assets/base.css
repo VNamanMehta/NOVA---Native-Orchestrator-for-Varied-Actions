@@ -48,6 +48,11 @@ body {
 
 body {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Content is intrinsically sized, not stretched — anchor it to the
+     bottom so a manually-enlarged window leaves space above, not below. */
+  justify-content: flex-end;
   color: var(--foreground);
   background: var(--background);
   font-family:
