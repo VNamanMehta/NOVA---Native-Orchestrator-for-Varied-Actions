@@ -42,6 +42,47 @@ describe('App', () => {
     expect(screen.getByRole('textbox', { name: 'Message Nova' })).toBeInTheDocument()
   })
 
+  it('opens Settings on boot when no API key is configured yet', async () => {
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: {
+        ...createApiStub().settings,
+        get: vi.fn(async () => ({
+          ok: true as const,
+          value: { activeProvider: 'grok' as const, apiKeyConfigured: false }
+        }))
+      }
+    })
+
+    render(<App />)
+
+    expect(await screen.findByTestId('settings-panel')).toBeInTheDocument()
+  })
+
+  it('does not open Settings on boot when a key is already configured', async () => {
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Message Nova' })).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument()
+  })
+
+  it('notifies main of a structural UI change when the view swaps', async () => {
+    const notifyStructuralUiChange = vi.fn()
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      window: { ...createApiStub().window, notifyStructuralUiChange }
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    notifyStructuralUiChange.mockClear()
+    await user.type(screen.getByRole('textbox', { name: 'Message Nova' }), '/settings{Enter}')
+
+    await waitFor(() => expect(notifyStructuralUiChange).toHaveBeenCalled())
+  })
+
   it('switches to Settings when main pushes the open-settings event', async () => {
     let pushedHandler: (() => void) | undefined
     vi.stubGlobal('api', {

@@ -42,15 +42,21 @@ function App(): React.JSX.Element {
   const maxPanelHeight = usePanelMaxHeight()
 
   const view = useAppStore((state) => state.view)
+  const apiKeyConfigured = useAppStore((state) => state.settings.apiKeyConfigured)
   const openSettings = useAppStore((state) => state.openSettings)
   const closeSettings = useAppStore((state) => state.closeSettings)
   const setSettings = useAppStore((state) => state.setSettings)
 
   useEffect(() => {
     window.api.settings.get().then((result) => {
-      if (result.ok) setSettings(result.value)
+      if (!result.ok) return
+      setSettings(result.value)
+      // Land directly on Settings when there's nothing to chat with yet,
+      // rather than showing an enabled-looking input that can't actually
+      // send until a key exists.
+      if (!result.value.apiKeyConfigured) openSettings()
     })
-  }, [setSettings])
+  }, [setSettings, openSettings])
 
   useEffect(() => {
     return window.api.events.on(MainToRendererChannels.openSettings, () => openSettings())
@@ -63,6 +69,14 @@ function App(): React.JSX.Element {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [closeSettings])
+
+  // A view swap or the no-key warning appearing/disappearing is a deliberate
+  // structural change, not organic conversation growth — let it resize a
+  // pinned window once instead of staying frozen at whatever size the
+  // window happened to be when it was pinned.
+  useEffect(() => {
+    window.api.window.notifyStructuralUiChange()
+  }, [view, apiKeyConfigured])
 
   return (
     <div ref={contentRef}>
