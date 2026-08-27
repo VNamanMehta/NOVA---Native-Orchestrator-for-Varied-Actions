@@ -9,9 +9,12 @@ interface InputBarProps {
 
 const SHAKE_DURATION_MS = 400
 
+const BLOCKED_SEND_MESSAGE = "Can't send — set your Grok API key in /settings first."
+
 export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
   const [shakeCount, setShakeCount] = useState(0)
+  const [announcement, setAnnouncement] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const store = useAppStore()
@@ -34,6 +37,15 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
     return () => clearTimeout(timer)
   }, [shakeCount])
 
+  // The clear happens in submit() (an event handler, not an effect); this
+  // effect only schedules the deferred re-set, so a repeated identical
+  // announcement is still a genuine DOM change a screen reader picks up.
+  useEffect(() => {
+    if (shakeCount === 0) return
+    const raf = requestAnimationFrame(() => setAnnouncement(BLOCKED_SEND_MESSAGE))
+    return () => cancelAnimationFrame(raf)
+  }, [shakeCount])
+
   const submit = (event: FormEvent): void => {
     event.preventDefault()
     const trimmed = draft.trim()
@@ -47,6 +59,7 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
     }
 
     if (!apiKeyConfigured) {
+      setAnnouncement('')
       setShakeCount((count) => count + 1)
       return
     }
@@ -73,10 +86,17 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
         />
       </form>
       {!apiKeyConfigured && (
-        <p data-testid="no-api-key-nudge" className="px-4 pb-3 text-xs text-destructive">
+        <p
+          data-testid="no-api-key-nudge"
+          role="status"
+          className="px-4 pb-3 text-xs text-destructive"
+        >
           Set your Grok API key in /settings to start chatting.
         </p>
       )}
+      <p role="alert" aria-live="assertive" className="sr-only">
+        {announcement}
+      </p>
     </div>
   )
 }

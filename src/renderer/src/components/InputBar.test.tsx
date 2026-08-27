@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '../store/appStore'
@@ -126,6 +126,28 @@ describe('InputBar', () => {
 
     const shakeAddCalls = addSpy.mock.calls.filter(([className]) => className === 'animate-shake')
     expect(shakeAddCalls).toHaveLength(2)
+  })
+
+  it('exposes the nudge as a status region for assistive tech', () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+
+    expect(screen.getByTestId('no-api-key-nudge')).toHaveAttribute('role', 'status')
+  })
+
+  it('announces a blocked send attempt for screen readers', async () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    const user = userEvent.setup()
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    await user.type(input, 'hello{Enter}')
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        "Can't send — set your Grok API key in /settings first."
+      )
+    })
   })
 
   it('does not shake on a normal successful send', async () => {
