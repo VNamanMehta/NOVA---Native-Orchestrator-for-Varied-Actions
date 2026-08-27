@@ -17,7 +17,8 @@ export type IpcResultValue<R> = R extends { ok: true; value: infer V } ? V : nev
 // --- 1. renderer → main, fire-and-forget -------------------------------------
 
 export const RendererToMainChannels = {
-  contentHeight: 'renderer->main:content-height'
+  contentHeight: 'renderer->main:content-height',
+  structuralUiChange: 'renderer->main:structural-ui-change'
 } as const
 
 export type RendererToMainChannel =
@@ -25,6 +26,7 @@ export type RendererToMainChannel =
 
 export interface RendererToMainPayloads {
   [RendererToMainChannels.contentHeight]: number
+  [RendererToMainChannels.structuralUiChange]: undefined
 }
 
 // --- 2. renderer → main, request/response ------------------------------------
@@ -123,6 +125,10 @@ export interface NovaApi {
     reportContentHeight: (
       height: RendererToMainPayloads[typeof RendererToMainChannels.contentHeight]
     ) => void
+    // A deliberate structural UI change (view swap, warning appearing) that
+    // should be allowed to resize the window once even while pinned —
+    // distinct from organic content growth, which stays frozen while pinned.
+    notifyStructuralUiChange: () => void
   }
   chat: {
     send: (

@@ -1,6 +1,6 @@
 import { ipcMain, type IpcMainEvent } from 'electron'
 import { RendererToMainChannels, RequestChannels } from '../../shared/ipc'
-import { resizeToContent } from '../window'
+import { allowResizeOnce, resizeToContent } from '../window'
 import { handleRequest, unregisterRequestHandlers } from './handleRequest'
 import { echo } from './chat'
 import { getSettings, saveActiveProvider, saveApiKey } from './settings'
@@ -10,6 +10,10 @@ export function registerIpcHandlers(): void {
     if (typeof height === 'number' && Number.isFinite(height)) {
       resizeToContent(height)
     }
+  })
+
+  ipcMain.on(RendererToMainChannels.structuralUiChange, () => {
+    allowResizeOnce()
   })
 
   handleRequest(RequestChannels.chatSend, (text) => echo(text))
@@ -22,5 +26,6 @@ export function registerIpcHandlers(): void {
 
 export function unregisterIpcHandlers(): void {
   ipcMain.removeAllListeners(RendererToMainChannels.contentHeight)
+  ipcMain.removeAllListeners(RendererToMainChannels.structuralUiChange)
   unregisterRequestHandlers()
 }

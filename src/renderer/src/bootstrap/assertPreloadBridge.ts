@@ -4,6 +4,7 @@
 // Keep in sync with NovaApi.
 const REQUIRED_LEAVES = [
   'window.reportContentHeight',
+  'window.notifyStructuralUiChange',
   'chat.send',
   'settings.get',
   'settings.setApiKey',

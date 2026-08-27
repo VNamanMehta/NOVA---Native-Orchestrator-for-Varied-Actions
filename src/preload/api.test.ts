@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { MainToRendererChannels, RequestChannels } from '../shared/ipc'
+import { MainToRendererChannels, RendererToMainChannels, RequestChannels } from '../shared/ipc'
 
 const invoke = vi.fn(async (...args: unknown[]) => {
   void args
@@ -7,16 +7,25 @@ const invoke = vi.fn(async (...args: unknown[]) => {
 })
 const on = vi.fn()
 const removeListener = vi.fn()
+const send = vi.fn()
 
 vi.mock('electron', () => ({
   ipcRenderer: {
     invoke: (...args: unknown[]) => invoke(...args),
     on: (...args: unknown[]) => on(...args),
-    removeListener: (...args: unknown[]) => removeListener(...args)
+    removeListener: (...args: unknown[]) => removeListener(...args),
+    send: (...args: unknown[]) => send(...args)
   }
 }))
 
 import { api } from './api'
+
+describe('preload api.window', () => {
+  it('notifyStructuralUiChange sends the structural-ui-change channel with no payload', () => {
+    api.window.notifyStructuralUiChange()
+    expect(send).toHaveBeenCalledWith(RendererToMainChannels.structuralUiChange)
+  })
+})
 
 describe('preload api.settings', () => {
   it('get() invokes settings:get with no payload', () => {

@@ -45,8 +45,16 @@ export function clampContentHeight(
 
 export type SizeAuthority = 'content' | 'manual'
 
-export function shouldApplyContentHeight(authority: SizeAuthority, pinned: boolean): boolean {
-  return authority === 'content' && !pinned
+// `bypassPinned` is a one-shot escape hatch for deliberate structural UI
+// changes (a view swap, a warning appearing) that should still resize a
+// pinned window once, distinct from organic content growth (a new chat
+// message) which pinning is meant to freeze against.
+export function shouldApplyContentHeight(
+  authority: SizeAuthority,
+  pinned: boolean,
+  bypassPinned = false
+): boolean {
+  return authority === 'content' && (!pinned || bypassPinned)
 }
 
 export function resetBounds(

@@ -25,6 +25,7 @@ let primed = false
 let sizeAuthority: SizeAuthority = 'content'
 let lastContentHeight = MIN_WINDOW_HEIGHT
 let readyCallbacks: Array<() => void> = []
+let bypassPinnedOnce = false
 
 function raiseWindow(): void {
   mainWindow?.moveTop()
@@ -40,16 +41,37 @@ function positionWindow(): void {
   mainWindow.setPosition(x, y)
 }
 
-export function resizeToContent(contentHeight: number): void {
-  lastContentHeight = contentHeight
+function applyResize(contentHeight: number, bypassPinned: boolean): void {
   if (!mainWindow) return
-  if (!shouldApplyContentHeight(sizeAuthority, pinned)) return
+  if (!shouldApplyContentHeight(sizeAuthority, pinned, bypassPinned)) return
   const [x, y] = mainWindow.getPosition()
   const [width, currentHeight] = mainWindow.getSize()
   const { workArea } = screen.getDisplayMatching(mainWindow.getBounds())
   const target = clampContentHeight(contentHeight, workArea, y)
   if (Math.abs(target - currentHeight) < RESIZE_THRESHOLD) return
   mainWindow.setBounds({ x, y, width, height: target })
+  // Only consume the bypass once it has actually produced a resize — a
+  // stale/no-op attempt (e.g. the new view hasn't reported its real height
+  // yet) shouldn't burn the one-shot before the report that needs it arrives.
+  if (bypassPinned) bypassPinnedOnce = false
+}
+
+export function resizeToContent(contentHeight: number): void {
+  lastContentHeight = contentHeight
+  applyResize(contentHeight, bypassPinnedOnce)
+}
+
+// Deliberate structural UI changes (a chat<->settings view swap, the no-key
+// warning appearing) should still resize a pinned window once, unlike
+// organic content growth (a new chat message) which pinning is meant to
+// freeze against. Arms a one-shot bypass and immediately retries with the
+// most recently known content height — covers the case where that height
+// was already reported and blocked by the pinned gate before this fires;
+// if the new content hasn't been measured yet, the bypass stays armed for
+// the resizeToContent call that reports it.
+export function allowResizeOnce(): void {
+  bypassPinnedOnce = true
+  applyResize(lastContentHeight, true)
 }
 
 export function resetWindowSize(): void {
@@ -86,6 +108,7 @@ export function createWindow(): BrowserWindow {
   sizeAuthority = 'content'
   lastContentHeight = MIN_WINDOW_HEIGHT
   readyCallbacks = []
+  bypassPinnedOnce = false
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,

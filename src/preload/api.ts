@@ -12,6 +12,9 @@ export const api: NovaApi = {
   window: {
     reportContentHeight(height) {
       ipcRenderer.send(RendererToMainChannels.contentHeight, height)
+    },
+    notifyStructuralUiChange() {
+      ipcRenderer.send(RendererToMainChannels.structuralUiChange)
     }
   },
   chat: {
