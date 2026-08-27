@@ -36,7 +36,15 @@ export function hasApiKey(baseDir: string, provider: ProviderId): boolean {
   }
 }
 
+// A distinct, catchable message so the renderer can tell this apart from a
+// generic save failure instead of collapsing every error to one string.
+export const ENCRYPTION_UNAVAILABLE_MESSAGE =
+  'OS secure storage is unavailable — Nova cannot save an API key on this machine.'
+
 export function setApiKey(baseDir: string, provider: ProviderId, key: string): void {
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error(ENCRYPTION_UNAVAILABLE_MESSAGE)
+  }
   mkdirSync(secretsDir(baseDir), { recursive: true })
   writeFileSync(secretPath(baseDir, provider), safeStorage.encryptString(key))
 }

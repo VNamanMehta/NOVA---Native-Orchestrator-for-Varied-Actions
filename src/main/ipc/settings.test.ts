@@ -11,7 +11,8 @@ vi.mock('electron', () => ({
   },
   safeStorage: {
     encryptString: (value: string) => Buffer.from(`enc:${value}`),
-    decryptString: (buffer: Buffer) => buffer.toString().replace(/^enc:/, '')
+    decryptString: (buffer: Buffer) => buffer.toString().replace(/^enc:/, ''),
+    isEncryptionAvailable: () => true
   }
 }))
 

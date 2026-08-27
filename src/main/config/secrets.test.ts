@@ -5,15 +5,17 @@ import { join } from 'path'
 
 const encryptString = vi.fn((value: string) => Buffer.from(`enc:${value}`))
 const decryptString = vi.fn((buffer: Buffer) => buffer.toString().replace(/^enc:/, ''))
+const isEncryptionAvailable = vi.fn(() => true)
 
 vi.mock('electron', () => ({
   safeStorage: {
     encryptString: (value: string) => encryptString(value),
-    decryptString: (buffer: Buffer) => decryptString(buffer)
+    decryptString: (buffer: Buffer) => decryptString(buffer),
+    isEncryptionAvailable: () => isEncryptionAvailable()
   }
 }))
 
-import { getApiKey, hasApiKey, setApiKey } from './secrets'
+import { ENCRYPTION_UNAVAILABLE_MESSAGE, getApiKey, hasApiKey, setApiKey } from './secrets'
 
 describe('secrets', () => {
   let dir: string
@@ -26,6 +28,8 @@ describe('secrets', () => {
     rmSync(dir, { recursive: true, force: true })
     encryptString.mockClear()
     decryptString.mockClear()
+    isEncryptionAvailable.mockReset()
+    isEncryptionAvailable.mockReturnValue(true)
   })
 
   it('returns null when no key has been saved for a provider', () => {
@@ -67,6 +71,14 @@ describe('secrets', () => {
       throw new Error('DPAPI: key not available on this machine/user')
     })
 
+    expect(hasApiKey(dir, 'grok')).toBe(false)
+  })
+
+  it('refuses to save when OS encryption is unavailable, with a distinct message', () => {
+    isEncryptionAvailable.mockReturnValue(false)
+
+    expect(() => setApiKey(dir, 'grok', 'sk-test-123')).toThrow(ENCRYPTION_UNAVAILABLE_MESSAGE)
+    expect(encryptString).not.toHaveBeenCalled()
     expect(hasApiKey(dir, 'grok')).toBe(false)
   })
 })

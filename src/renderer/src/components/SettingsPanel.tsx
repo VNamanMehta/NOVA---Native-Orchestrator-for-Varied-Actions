@@ -20,6 +20,7 @@ export function SettingsPanel(): React.JSX.Element {
   const [replacing, setReplacing] = useState(false)
   const [draftKey, setDraftKey] = useState('')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [saveErrorMessage, setSaveErrorMessage] = useState('')
 
   const showEditableField = !settings.apiKeyConfigured || replacing
 
@@ -46,6 +47,7 @@ export function SettingsPanel(): React.JSX.Element {
       setReplacing(false)
       setSaveStatus('saved')
     } else {
+      setSaveErrorMessage(result.error.message)
       setSaveStatus('error')
     }
   }
@@ -139,7 +141,7 @@ export function SettingsPanel(): React.JSX.Element {
           )}
           {saveStatus === 'error' && (
             <p data-testid="save-error" className="text-xs text-destructive">
-              Couldn&apos;t save the key. Try again.
+              {saveErrorMessage || "Couldn't save the key. Try again."}
             </p>
           )}
         </div>

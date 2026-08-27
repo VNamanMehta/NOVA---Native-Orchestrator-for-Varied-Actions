@@ -79,7 +79,7 @@ describe('SettingsPanel', () => {
     await user.type(screen.getByPlaceholderText('Paste your API key'), 'sk-test-123')
     await user.click(screen.getByRole('button', { name: /save/i }))
 
-    await waitFor(() => expect(screen.getByTestId('save-error')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByTestId('save-error')).toHaveTextContent('boom'))
   })
 
   it('auto-dismisses the saved confirmation after 2 seconds', async () => {
