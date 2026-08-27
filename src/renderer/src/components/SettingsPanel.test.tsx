@@ -128,6 +128,87 @@ describe('SettingsPanel', () => {
     vi.useRealTimers()
   })
 
+  it('returns to chat after the confirmation dismisses on a first-time key save', async () => {
+    vi.useFakeTimers()
+    useAppStore.setState({
+      view: 'settings',
+      settings: { activeProvider: 'grok', apiKeyConfigured: false }
+    })
+    const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    render(<SettingsPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText('Paste your API key'), {
+      target: { value: 'sk-test-123' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await vi.waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+
+    expect(useAppStore.getState().view).toBe('chat')
+    vi.useRealTimers()
+  })
+
+  it('does not return to chat after replacing an already-configured key', async () => {
+    vi.useFakeTimers()
+    useAppStore.setState({
+      view: 'settings',
+      settings: { activeProvider: 'grok', apiKeyConfigured: true }
+    })
+    const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    render(<SettingsPanel />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }))
+    fireEvent.change(screen.getByPlaceholderText('Paste your API key'), {
+      target: { value: 'sk-new-456' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await vi.waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+
+    expect(useAppStore.getState().view).toBe('settings')
+    vi.useRealTimers()
+  })
+
+  it('gives only the selected radio a tab stop, per the roving-tabindex pattern', () => {
+    render(<SettingsPanel />)
+
+    expect(screen.getByRole('radio', { name: /grok/i })).toHaveAttribute('tabIndex', '0')
+    for (const name of [/anthropic/i, /openai/i, /ollama/i]) {
+      expect(screen.getByRole('radio', { name })).toHaveAttribute('tabIndex', '-1')
+    }
+  })
+
+  it('keeps focus and selection on the sole enabled radio when an arrow key wraps around', async () => {
+    const setActiveProvider = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setActiveProvider }
+    })
+    const user = userEvent.setup()
+    render(<SettingsPanel />)
+
+    const grok = screen.getByRole('radio', { name: /grok/i })
+    grok.focus()
+    await user.keyboard('{ArrowDown}')
+
+    expect(grok).toHaveFocus()
+    expect(setActiveProvider).not.toHaveBeenCalled()
+  })
+
   it('closes settings when Close is clicked', () => {
     render(<SettingsPanel />)
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))

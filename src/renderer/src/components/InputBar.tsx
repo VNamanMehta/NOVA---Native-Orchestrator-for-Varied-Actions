@@ -60,6 +60,7 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
     if (!apiKeyConfigured) {
       setAnnouncement('')
       setShakeCount((count) => count + 1)
+      setDraft('')
       return
     }
 

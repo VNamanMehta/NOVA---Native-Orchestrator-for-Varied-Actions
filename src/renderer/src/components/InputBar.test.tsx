@@ -150,6 +150,20 @@ describe('InputBar', () => {
     })
   })
 
+  it('clears the draft on a blocked send, so a follow-up /settings routes cleanly', async () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    const user = userEvent.setup()
+    const onSend = vi.fn()
+    render(<InputBar onSend={onSend} disabled={false} />)
+
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    await user.type(input, 'hello{Enter}')
+    expect(input).toHaveValue('')
+
+    await user.type(input, '/settings{Enter}')
+    expect(useAppStore.getState().view).toBe('settings')
+  })
+
   it('does not shake on a normal successful send', async () => {
     const user = userEvent.setup()
     const onSend = vi.fn()

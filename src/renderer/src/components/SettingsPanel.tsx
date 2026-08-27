@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { ALL_PROVIDERS, isProviderEnabled, type ProviderId } from '../../../shared/domain'
 import { useAppStore } from '../store/appStore'
 import { cn } from '../lib/utils'
@@ -9,6 +9,8 @@ const PROVIDER_LABELS: Record<ProviderId, string> = {
   openai: 'OpenAI',
   ollama: 'Ollama (local)'
 }
+
+const ENABLED_PROVIDERS = ALL_PROVIDERS.filter(isProviderEnabled)
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -21,14 +23,19 @@ export function SettingsPanel(): React.JSX.Element {
   const [draftKey, setDraftKey] = useState('')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
+  const [returnToChatOnDismiss, setReturnToChatOnDismiss] = useState(false)
+  const radioRefs = useRef<Partial<Record<ProviderId, HTMLButtonElement | null>>>({})
 
   const showEditableField = !settings.apiKeyConfigured || replacing
 
   useEffect(() => {
     if (saveStatus !== 'saved') return
-    const timer = setTimeout(() => setSaveStatus('idle'), 2000)
+    const timer = setTimeout(() => {
+      setSaveStatus('idle')
+      if (returnToChatOnDismiss) closeSettings()
+    }, 2000)
     return () => clearTimeout(timer)
-  }, [saveStatus])
+  }, [saveStatus, returnToChatOnDismiss, closeSettings])
 
   async function handleSelectProvider(provider: ProviderId): Promise<void> {
     if (!isProviderEnabled(provider) || provider === settings.activeProvider) return
@@ -36,15 +43,37 @@ export function SettingsPanel(): React.JSX.Element {
     if (result.ok) setSettings({ ...settings, activeProvider: provider })
   }
 
+  // Roving-tabindex radiogroup: arrow keys move selection and focus among
+  // enabled rows only, wrapping at the ends.
+  function handleRadioKeyDown(event: KeyboardEvent<HTMLButtonElement>): void {
+    if (ENABLED_PROVIDERS.length === 0) return
+    const direction =
+      event.key === 'ArrowDown' || event.key === 'ArrowRight'
+        ? 1
+        : event.key === 'ArrowUp' || event.key === 'ArrowLeft'
+          ? -1
+          : 0
+    if (direction === 0) return
+    event.preventDefault()
+    const currentIndex = ENABLED_PROVIDERS.indexOf(settings.activeProvider)
+    const base = currentIndex === -1 ? 0 : currentIndex
+    const next =
+      ENABLED_PROVIDERS[(base + direction + ENABLED_PROVIDERS.length) % ENABLED_PROVIDERS.length]
+    radioRefs.current[next]?.focus()
+    void handleSelectProvider(next)
+  }
+
   async function handleSave(): Promise<void> {
     const trimmed = draftKey.trim()
     if (trimmed.length === 0) return
+    const isFirstConfiguration = !settings.apiKeyConfigured
     setSaveStatus('saving')
     const result = await window.api.settings.setApiKey(settings.activeProvider, trimmed)
     if (result.ok) {
       setSettings({ ...settings, apiKeyConfigured: true })
       setDraftKey('')
       setReplacing(false)
+      setReturnToChatOnDismiss(isFirstConfiguration)
       setSaveStatus('saved')
     } else {
       setSaveErrorMessage(result.error.message)
@@ -75,11 +104,16 @@ export function SettingsPanel(): React.JSX.Element {
             return (
               <button
                 key={provider}
+                ref={(el) => {
+                  radioRefs.current[provider] = el
+                }}
                 type="button"
                 role="radio"
                 aria-checked={selected}
                 disabled={!enabled}
+                tabIndex={selected ? 0 : -1}
                 onClick={() => handleSelectProvider(provider)}
+                onKeyDown={handleRadioKeyDown}
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-left text-sm',
                   selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',

@@ -74,8 +74,13 @@ function App(): React.JSX.Element {
   }, [closeSettings])
 
   // Flags the next content-height report as structural (view swap, no-key
-  // warning); expires unconsumed after 1s so it can't linger onto a later one.
+  // warning), expiring unconsumed after 1s; skipped on mount (no prior size).
+  const isMountRef = useRef(true)
   useEffect(() => {
+    if (isMountRef.current) {
+      isMountRef.current = false
+      return
+    }
     structuralChangeRef.current = true
     const timer = setTimeout(() => {
       structuralChangeRef.current = false

@@ -41,6 +41,10 @@
   background: transparent;
 }
 
+.scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
 html {
   overflow: hidden;
 }
@@ -117,4 +121,3 @@ body {
     outline: 2px solid var(--destructive);
   }
 }
-
