@@ -41,12 +41,12 @@
   background: transparent;
 }
 
-html,
-body {
+html {
   overflow: hidden;
 }
 
 body {
+  overflow: hidden;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
