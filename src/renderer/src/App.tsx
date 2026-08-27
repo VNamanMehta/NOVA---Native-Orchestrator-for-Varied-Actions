@@ -11,12 +11,8 @@ function computeMaxPanelHeight(): number {
   return Math.floor((globalThis.screen?.availHeight ?? 0) * MAX_HEIGHT_FRACTION)
 }
 
-// A move to a same-size display doesn't fire 'resize' (only the window's
-// position changes), so also recompute on focus/visibilitychange —
-// showWindow() in src/main/window.ts calls show()+focus() on every
-// hotkey/tray summon, which is exactly when the window may have landed on a
-// new display. Stopgap until main pushes the target display's work area
-// over IPC.
+// Same-size-display moves don't fire 'resize', so also recompute on
+// focus/visibilitychange (showWindow() focuses the window on every summon).
 function usePanelMaxHeight(): number {
   const [maxHeight, setMaxHeight] = useState(computeMaxPanelHeight)
 
@@ -51,9 +47,8 @@ function App(): React.JSX.Element {
     window.api.settings.get().then((result) => {
       if (!result.ok) return
       setSettings(result.value)
-      // Land directly on Settings when there's nothing to chat with yet,
-      // rather than showing an enabled-looking input that can't actually
-      // send until a key exists.
+      // Land on Settings directly if there's no key yet, rather than an
+      // enabled-looking input that can't actually send.
       if (!result.value.apiKeyConfigured) openSettings()
     })
   }, [setSettings, openSettings])
@@ -70,10 +65,8 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [closeSettings])
 
-  // A view swap or the no-key warning appearing/disappearing is a deliberate
-  // structural change, not organic conversation growth — let it resize a
-  // pinned window once instead of staying frozen at whatever size the
-  // window happened to be when it was pinned.
+  // View swaps and the no-key warning are structural changes, not organic
+  // growth — let them resize a pinned window instead of staying frozen.
   useEffect(() => {
     window.api.window.notifyStructuralUiChange()
   }, [view, apiKeyConfigured])

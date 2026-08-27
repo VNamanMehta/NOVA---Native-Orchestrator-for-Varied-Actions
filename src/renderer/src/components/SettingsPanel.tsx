@@ -63,11 +63,8 @@ export function SettingsPanel(): React.JSX.Element {
         </button>
       </div>
 
-      {/* Only MessageList scrolled before this component existed — a fixed
-          height clamp is now shared with the settings view too (App.tsx),
-          so this content needs the same internal-scroll escape hatch
-          MessageList already has, rather than being clipped on small
-          displays or once error/confirmation text pushes past the cap. */}
+      {/* Shares App's height clamp with chat now, so this needs the same
+          internal-scroll escape hatch MessageList already has. */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 scrollbar-gutter-stable">
         <div role="radiogroup" aria-label="Provider" className="flex flex-col gap-1">
           {ALL_PROVIDERS.map((provider) => {

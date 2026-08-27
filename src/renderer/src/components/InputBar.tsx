@@ -21,13 +21,8 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
     if (!disabled) inputRef.current?.focus()
   }, [disabled])
 
-  // Imperative classList toggle with a forced reflow, rather than a boolean
-  // React state driving the class: a second blocked Enter within the
-  // animation window would otherwise be a true->true no-op React bails on,
-  // so the class never actually gets removed+reapplied and the animation
-  // silently fails to replay. shakeCount increments unconditionally on
-  // every blocked attempt, so this effect always re-runs and always forces
-  // a fresh restart, however close together the attempts are.
+  // Imperative classList + forced reflow, not a boolean state flag — a
+  // true->true update would be a React no-op and never replay the animation.
   useEffect(() => {
     if (shakeCount === 0) return
     const el = formRef.current

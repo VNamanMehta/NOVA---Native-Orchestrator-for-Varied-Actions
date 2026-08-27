@@ -91,13 +91,8 @@ describe('SettingsPanel', () => {
     })
     render(<SettingsPanel />)
 
-    // NOTE: userEvent.type()/click() hang indefinitely here under vitest 4's
-    // fake timers (confirmed via isolated repro: userEvent never resolves,
-    // even with `delay: null` + `advanceTimers`, while fireEvent + vi.waitFor
-    // exercise the identical component code path and resolve immediately).
-    // Using fireEvent for input/click in this one test to work around that
-    // library incompatibility; the auto-dismiss behavior under test is
-    // unaffected since it lives entirely in the component's own useEffect.
+    // userEvent hangs under vitest 4's fake timers here; fireEvent +
+    // vi.waitFor exercise the same code path and resolve immediately.
     fireEvent.change(screen.getByPlaceholderText('Paste your API key'), {
       target: { value: 'sk-test-123' }
     })

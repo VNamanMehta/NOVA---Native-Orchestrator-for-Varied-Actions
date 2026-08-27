@@ -11,12 +11,8 @@ function secretPath(baseDir: string, provider: ProviderId): string {
   return join(secretsDir(baseDir), `${provider}.enc`)
 }
 
-// A saved-but-undecryptable file (OS keychain reset, profile restored onto a
-// different machine/user) is treated the same as "no key saved" by both
-// functions below, rather than surfacing a raw decrypt error to the caller.
-// hasApiKey has its own try/catch instead of delegating to getApiKey so a
-// boolean-only caller (e.g. every settings:get) never has the decrypted
-// plaintext pass through its return value, even transiently.
+// hasApiKey does its own decrypt attempt instead of delegating to getApiKey,
+// so a boolean-only caller never has the decrypted plaintext pass through.
 
 export function getApiKey(baseDir: string, provider: ProviderId): string | null {
   const path = secretPath(baseDir, provider)

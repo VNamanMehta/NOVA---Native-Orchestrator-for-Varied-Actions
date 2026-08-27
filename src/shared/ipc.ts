@@ -115,8 +115,7 @@ export interface MainToRendererPayloads {
 }
 
 // TODO(Phase 2): confirmation-request still needs a renderer->main approve/deny
-// channel and a correlation id (concurrent tasks, Phase 4). The on/off subscribe
-// surface itself now exists as NovaApi.events.on (see preload/api.ts).
+// channel and a correlation id (concurrent tasks, Phase 4).
 
 // --- The bridge surface exposed to the renderer as `window.api` --------------
 
@@ -125,9 +124,8 @@ export interface NovaApi {
     reportContentHeight: (
       height: RendererToMainPayloads[typeof RendererToMainChannels.contentHeight]
     ) => void
-    // A deliberate structural UI change (view swap, warning appearing) that
-    // should be allowed to resize the window once even while pinned —
-    // distinct from organic content growth, which stays frozen while pinned.
+    // Lets a deliberate structural UI change (not organic content growth)
+    // resize the window once even while pinned.
     notifyStructuralUiChange: () => void
   }
   chat: {

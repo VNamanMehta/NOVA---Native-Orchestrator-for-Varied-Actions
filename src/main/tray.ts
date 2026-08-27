@@ -22,10 +22,8 @@ function buildMenu(): Menu {
       label: 'Open Settings',
       click: () => {
         showWindow()
-        // The renderer's push listener is set up in a React effect, which
-        // only exists once the window has actually painted at least once.
-        // Gate the push on that instead of firing it into a not-yet-mounted
-        // renderer, where it would be silently dropped.
+        // The renderer's push listener only exists once mounted — gate on
+        // that so the push isn't silently dropped before it exists.
         whenReady(() => pushOpenSettings())
       }
     },

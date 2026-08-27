@@ -58,21 +58,8 @@ export function resizeToContent(contentHeight: number): void {
   applyResize(contentHeight, Date.now() < bypassPinnedUntil)
 }
 
-// Deliberate structural UI changes (a chat<->settings view swap, the no-key
-// warning appearing) should still resize a pinned window once, unlike
-// organic content growth (a new chat message) which pinning is meant to
-// freeze against. Opens a short bypass window and immediately retries with
-// the most recently known content height — covers the case where that
-// height was already reported and blocked by the pinned gate before this
-// fires; if the new content hasn't been measured yet, the still-open window
-// covers the resizeToContent call that reports it shortly after.
-//
-// Time-bounded rather than "consume on the next successful resize": if the
-// structural change happens to need no resize (new content is already the
-// same height), a consume-on-success design would leave the bypass armed
-// indefinitely, silently letting some later, unrelated organic resize
-// through the pinned freeze it's supposed to respect. A short window closes
-// on its own either way.
+// Time-bounded bypass so a structural UI change can resize a pinned window
+// once, without risking staying armed forever if that resize is a no-op.
 export function allowResizeOnce(): void {
   bypassPinnedUntil = Date.now() + BYPASS_PINNED_WINDOW_MS
   applyResize(lastContentHeight, true)
@@ -181,11 +168,8 @@ export function getMainWindow(): BrowserWindow | null {
   return mainWindow
 }
 
-// Runs `callback` once the window's content has actually painted at least
-// once — immediately if that's already happened, otherwise queued to run
-// when it does. Use this to gate anything that assumes the renderer has
-// mounted (e.g. a main->renderer push whose only listener is set up in a
-// React effect), the same way showWindow() itself defers via pendingShow.
+// Runs callback once the window has painted (immediately if already true) —
+// for gating anything that assumes the renderer has mounted.
 export function whenReady(callback: () => void): void {
   if (readyToShow) {
     callback()
