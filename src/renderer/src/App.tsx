@@ -73,9 +73,8 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [closeSettings])
 
-  // Flags the next content-height report as a structural change (view swap,
-  // no-key warning). Expires unconsumed if that change measured no height
-  // delta (no report follows it), so it can't linger onto a later report.
+  // Flags the next content-height report as structural (view swap, no-key
+  // warning); expires unconsumed after 1s so it can't linger onto a later one.
   useEffect(() => {
     structuralChangeRef.current = true
     const timer = setTimeout(() => {
