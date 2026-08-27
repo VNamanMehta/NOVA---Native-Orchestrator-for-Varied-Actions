@@ -11,6 +11,8 @@ function computeMaxPanelHeight(): number {
   return Math.floor((globalThis.screen?.availHeight ?? 0) * MAX_HEIGHT_FRACTION)
 }
 
+const STRUCTURAL_CHANGE_EXPIRY_MS = 1000
+
 // Same-size-display moves don't fire 'resize', so also recompute on
 // focus/visibilitychange (showWindow() focuses the window on every summon).
 function usePanelMaxHeight(): number {
@@ -72,9 +74,14 @@ function App(): React.JSX.Element {
   }, [closeSettings])
 
   // Flags the next content-height report as a structural change (view swap,
-  // no-key warning), not organic growth, so it can resize a pinned window.
+  // no-key warning). Expires unconsumed if that change measured no height
+  // delta (no report follows it), so it can't linger onto a later report.
   useEffect(() => {
     structuralChangeRef.current = true
+    const timer = setTimeout(() => {
+      structuralChangeRef.current = false
+    }, STRUCTURAL_CHANGE_EXPIRY_MS)
+    return () => clearTimeout(timer)
   }, [view, apiKeyConfigured])
 
   return (
