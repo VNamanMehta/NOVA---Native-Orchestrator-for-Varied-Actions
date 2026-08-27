@@ -65,7 +65,21 @@ describe('InputBar', () => {
     expect(useAppStore.getState().view).toBe('settings')
   })
 
-  it('blocks sending and shows a nudge when no API key is configured', async () => {
+  it('shows the nudge immediately when no API key is configured, before any send attempt', () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+
+    expect(screen.getByTestId('no-api-key-nudge')).toHaveTextContent(
+      'Set your Grok API key in /settings to start chatting.'
+    )
+  })
+
+  it('does not show the nudge when a key is configured', () => {
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+    expect(screen.queryByTestId('no-api-key-nudge')).not.toBeInTheDocument()
+  })
+
+  it('blocks sending when no API key is configured', async () => {
     useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
     const user = userEvent.setup()
     const onSend = vi.fn()
@@ -75,21 +89,39 @@ describe('InputBar', () => {
     await user.type(input, 'hello{Enter}')
 
     expect(onSend).not.toHaveBeenCalled()
-    expect(screen.getByTestId('no-api-key-nudge')).toHaveTextContent(
-      'Set your Grok API key in /settings to start chatting.'
-    )
   })
 
-  it('clears the nudge once the user starts typing again', async () => {
+  it('the nudge persists while the user keeps typing (no key configured)', async () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    const user = userEvent.setup()
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    await user.type(input, 'hello')
+
+    expect(screen.getByTestId('no-api-key-nudge')).toBeInTheDocument()
+  })
+
+  it('shakes the input bar on a blocked send attempt', async () => {
     useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
     const user = userEvent.setup()
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
     const input = screen.getByRole('textbox', { name: 'Message Nova' })
     await user.type(input, 'hello{Enter}')
-    expect(screen.getByTestId('no-api-key-nudge')).toBeInTheDocument()
 
-    await user.type(input, 'x')
-    expect(screen.queryByTestId('no-api-key-nudge')).not.toBeInTheDocument()
+    expect(input.closest('form')).toHaveClass('animate-shake')
+  })
+
+  it('does not shake on a normal successful send', async () => {
+    const user = userEvent.setup()
+    const onSend = vi.fn()
+    render(<InputBar onSend={onSend} disabled={false} />)
+
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    await user.type(input, 'hello{Enter}')
+
+    expect(onSend).toHaveBeenCalledWith('hello')
+    expect(input.closest('form')).not.toHaveClass('animate-shake')
   })
 })
