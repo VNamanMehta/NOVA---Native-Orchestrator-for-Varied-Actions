@@ -45,10 +45,11 @@ export function clampContentHeight(
 
 export type SizeAuthority = 'content' | 'manual'
 
-// `bypassPinned` is a one-shot escape hatch for deliberate structural UI
-// changes (a view swap, a warning appearing) that should still resize a
-// pinned window once, distinct from organic content growth (a new chat
-// message) which pinning is meant to freeze against.
+// `bypassPinned` is an escape hatch for deliberate structural UI changes (a
+// view swap, a warning appearing) that should still be able to resize a
+// pinned window, distinct from organic content growth (a new chat message)
+// which pinning is meant to freeze against. Callers scope how long/how
+// often the bypass applies; this function only ever sees the resulting bool.
 export function shouldApplyContentHeight(
   authority: SizeAuthority,
   pinned: boolean,

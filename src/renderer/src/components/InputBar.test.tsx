@@ -113,6 +113,22 @@ describe('InputBar', () => {
     expect(input.closest('form')).toHaveClass('animate-shake')
   })
 
+  it('restarts the shake animation on a second blocked attempt shortly after the first', async () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    const user = userEvent.setup()
+    render(<InputBar onSend={vi.fn()} disabled={false} />)
+
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    const form = input.closest('form') as HTMLFormElement
+    const addSpy = vi.spyOn(form.classList, 'add')
+
+    await user.type(input, 'hello{Enter}')
+    await user.type(input, 'world{Enter}')
+
+    const shakeAddCalls = addSpy.mock.calls.filter(([className]) => className === 'animate-shake')
+    expect(shakeAddCalls).toHaveLength(2)
+  })
+
   it('does not shake on a normal successful send', async () => {
     const user = userEvent.setup()
     const onSend = vi.fn()

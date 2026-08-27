@@ -15,6 +15,7 @@ import {
 
 const WINDOW_WIDTH = 720
 const RESIZE_THRESHOLD = 2
+const BYPASS_PINNED_WINDOW_MS = 500
 
 let mainWindow: BrowserWindow | null = null
 let pinned = false
@@ -25,7 +26,7 @@ let primed = false
 let sizeAuthority: SizeAuthority = 'content'
 let lastContentHeight = MIN_WINDOW_HEIGHT
 let readyCallbacks: Array<() => void> = []
-let bypassPinnedOnce = false
+let bypassPinnedUntil = 0
 
 function raiseWindow(): void {
   mainWindow?.moveTop()
@@ -50,27 +51,30 @@ function applyResize(contentHeight: number, bypassPinned: boolean): void {
   const target = clampContentHeight(contentHeight, workArea, y)
   if (Math.abs(target - currentHeight) < RESIZE_THRESHOLD) return
   mainWindow.setBounds({ x, y, width, height: target })
-  // Only consume the bypass once it has actually produced a resize — a
-  // stale/no-op attempt (e.g. the new view hasn't reported its real height
-  // yet) shouldn't burn the one-shot before the report that needs it arrives.
-  if (bypassPinned) bypassPinnedOnce = false
 }
 
 export function resizeToContent(contentHeight: number): void {
   lastContentHeight = contentHeight
-  applyResize(contentHeight, bypassPinnedOnce)
+  applyResize(contentHeight, Date.now() < bypassPinnedUntil)
 }
 
 // Deliberate structural UI changes (a chat<->settings view swap, the no-key
 // warning appearing) should still resize a pinned window once, unlike
 // organic content growth (a new chat message) which pinning is meant to
-// freeze against. Arms a one-shot bypass and immediately retries with the
-// most recently known content height — covers the case where that height
-// was already reported and blocked by the pinned gate before this fires;
-// if the new content hasn't been measured yet, the bypass stays armed for
-// the resizeToContent call that reports it.
+// freeze against. Opens a short bypass window and immediately retries with
+// the most recently known content height — covers the case where that
+// height was already reported and blocked by the pinned gate before this
+// fires; if the new content hasn't been measured yet, the still-open window
+// covers the resizeToContent call that reports it shortly after.
+//
+// Time-bounded rather than "consume on the next successful resize": if the
+// structural change happens to need no resize (new content is already the
+// same height), a consume-on-success design would leave the bypass armed
+// indefinitely, silently letting some later, unrelated organic resize
+// through the pinned freeze it's supposed to respect. A short window closes
+// on its own either way.
 export function allowResizeOnce(): void {
-  bypassPinnedOnce = true
+  bypassPinnedUntil = Date.now() + BYPASS_PINNED_WINDOW_MS
   applyResize(lastContentHeight, true)
 }
 
@@ -108,7 +112,7 @@ export function createWindow(): BrowserWindow {
   sizeAuthority = 'content'
   lastContentHeight = MIN_WINDOW_HEIGHT
   readyCallbacks = []
-  bypassPinnedOnce = false
+  bypassPinnedUntil = 0
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,

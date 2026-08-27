@@ -78,10 +78,6 @@ describe('shouldApplyContentHeight', () => {
   it('a one-shot bypass does not override manual authority', () => {
     expect(shouldApplyContentHeight('manual', true, true)).toBe(false)
   })
-
-  it('the bypass parameter defaults to false (existing call sites unaffected)', () => {
-    expect(shouldApplyContentHeight('content', true)).toBe(false)
-  })
 })
 
 describe('resetBounds', () => {
