@@ -11,9 +11,8 @@ function secretPath(baseDir: string, provider: ProviderId): string {
   return join(secretsDir(baseDir), `${provider}.enc`)
 }
 
-// hasApiKey does its own decrypt attempt instead of delegating to getApiKey,
-// so a boolean-only caller never has the decrypted plaintext pass through.
-
+// An undecryptable file (OS keychain reset, restored onto a different
+// machine) is treated as no key saved, rather than throwing.
 export function getApiKey(baseDir: string, provider: ProviderId): string | null {
   const path = secretPath(baseDir, provider)
   if (!existsSync(path)) return null
@@ -24,6 +23,8 @@ export function getApiKey(baseDir: string, provider: ProviderId): string | null 
   }
 }
 
+// Own decrypt attempt instead of delegating to getApiKey, so a boolean-only
+// caller never has the decrypted plaintext pass through its return value.
 export function hasApiKey(baseDir: string, provider: ProviderId): boolean {
   const path = secretPath(baseDir, provider)
   if (!existsSync(path)) return false

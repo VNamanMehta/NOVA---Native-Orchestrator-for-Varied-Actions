@@ -10,11 +10,8 @@ const ALLOWED_PUSH_CHANNELS = new Set<string>(Object.values(MainToRendererChanne
 
 export const api: NovaApi = {
   window: {
-    reportContentHeight(height) {
-      ipcRenderer.send(RendererToMainChannels.contentHeight, height)
-    },
-    notifyStructuralUiChange() {
-      ipcRenderer.send(RendererToMainChannels.structuralUiChange)
+    reportContentHeight(report) {
+      ipcRenderer.send(RendererToMainChannels.contentHeight, report)
     }
   },
   chat: {

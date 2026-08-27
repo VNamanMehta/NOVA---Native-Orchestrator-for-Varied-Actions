@@ -67,21 +67,6 @@ describe('App', () => {
     expect(screen.queryByTestId('settings-panel')).not.toBeInTheDocument()
   })
 
-  it('notifies main of a structural UI change when the view swaps', async () => {
-    const notifyStructuralUiChange = vi.fn()
-    vi.stubGlobal('api', {
-      ...createApiStub(),
-      window: { ...createApiStub().window, notifyStructuralUiChange }
-    })
-    const user = userEvent.setup()
-    render(<App />)
-
-    notifyStructuralUiChange.mockClear()
-    await user.type(screen.getByRole('textbox', { name: 'Message Nova' }), '/settings{Enter}')
-
-    await waitFor(() => expect(notifyStructuralUiChange).toHaveBeenCalled())
-  })
-
   it('switches to Settings when main pushes the open-settings event', async () => {
     let pushedHandler: (() => void) | undefined
     vi.stubGlobal('api', {

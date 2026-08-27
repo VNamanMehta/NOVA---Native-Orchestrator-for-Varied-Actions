@@ -21,9 +21,12 @@ vi.mock('electron', () => ({
 import { api } from './api'
 
 describe('preload api.window', () => {
-  it('notifyStructuralUiChange sends the structural-ui-change channel with no payload', () => {
-    api.window.notifyStructuralUiChange()
-    expect(send).toHaveBeenCalledWith(RendererToMainChannels.structuralUiChange)
+  it('reportContentHeight sends the full report as-is', () => {
+    api.window.reportContentHeight({ height: 320, structuralChange: true })
+    expect(send).toHaveBeenCalledWith(RendererToMainChannels.contentHeight, {
+      height: 320,
+      structuralChange: true
+    })
   })
 })
 

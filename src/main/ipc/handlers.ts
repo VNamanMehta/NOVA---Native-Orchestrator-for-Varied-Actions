@@ -1,19 +1,27 @@
 import { ipcMain, type IpcMainEvent } from 'electron'
 import { RendererToMainChannels, RequestChannels } from '../../shared/ipc'
-import { allowResizeOnce, resizeToContent } from '../window'
+import { resizeToContent } from '../window'
 import { handleRequest, unregisterRequestHandlers } from './handleRequest'
 import { echo } from './chat'
 import { getSettings, saveActiveProvider, saveApiKey } from './settings'
 
-export function registerIpcHandlers(): void {
-  ipcMain.on(RendererToMainChannels.contentHeight, (_event: IpcMainEvent, height: unknown) => {
-    if (typeof height === 'number' && Number.isFinite(height)) {
-      resizeToContent(height)
-    }
-  })
+function isContentHeightReport(
+  value: unknown
+): value is { height: number; structuralChange: boolean } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { height: unknown }).height === 'number' &&
+    Number.isFinite((value as { height: number }).height) &&
+    typeof (value as { structuralChange: unknown }).structuralChange === 'boolean'
+  )
+}
 
-  ipcMain.on(RendererToMainChannels.structuralUiChange, () => {
-    allowResizeOnce()
+export function registerIpcHandlers(): void {
+  ipcMain.on(RendererToMainChannels.contentHeight, (_event: IpcMainEvent, report: unknown) => {
+    if (isContentHeightReport(report)) {
+      resizeToContent(report.height, report.structuralChange)
+    }
   })
 
   handleRequest(RequestChannels.chatSend, (text) => echo(text))
@@ -26,6 +34,5 @@ export function registerIpcHandlers(): void {
 
 export function unregisterIpcHandlers(): void {
   ipcMain.removeAllListeners(RendererToMainChannels.contentHeight)
-  ipcMain.removeAllListeners(RendererToMainChannels.structuralUiChange)
   unregisterRequestHandlers()
 }

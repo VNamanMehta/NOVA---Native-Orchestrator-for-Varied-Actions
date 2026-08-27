@@ -17,16 +17,21 @@ export type IpcResultValue<R> = R extends { ok: true; value: infer V } ? V : nev
 // --- 1. renderer → main, fire-and-forget -------------------------------------
 
 export const RendererToMainChannels = {
-  contentHeight: 'renderer->main:content-height',
-  structuralUiChange: 'renderer->main:structural-ui-change'
+  contentHeight: 'renderer->main:content-height'
 } as const
 
 export type RendererToMainChannel =
   (typeof RendererToMainChannels)[keyof typeof RendererToMainChannels]
 
+export interface ContentHeightReport {
+  height: number
+  // True only for the report following a deliberate structural UI change —
+  // lets main resize a pinned window for exactly that report.
+  structuralChange: boolean
+}
+
 export interface RendererToMainPayloads {
-  [RendererToMainChannels.contentHeight]: number
-  [RendererToMainChannels.structuralUiChange]: undefined
+  [RendererToMainChannels.contentHeight]: ContentHeightReport
 }
 
 // --- 2. renderer → main, request/response ------------------------------------
@@ -122,11 +127,8 @@ export interface MainToRendererPayloads {
 export interface NovaApi {
   window: {
     reportContentHeight: (
-      height: RendererToMainPayloads[typeof RendererToMainChannels.contentHeight]
+      report: RendererToMainPayloads[typeof RendererToMainChannels.contentHeight]
     ) => void
-    // Lets a deliberate structural UI change (not organic content growth)
-    // resize the window once even while pinned.
-    notifyStructuralUiChange: () => void
   }
   chat: {
     send: (

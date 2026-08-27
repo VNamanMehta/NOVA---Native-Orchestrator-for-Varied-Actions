@@ -9,8 +9,7 @@ import { useAppStore } from './src/renderer/src/store/appStore'
 export function createApiStub(): NovaApi {
   return {
     window: {
-      reportContentHeight: vi.fn(),
-      notifyStructuralUiChange: vi.fn()
+      reportContentHeight: vi.fn()
     },
     chat: {
       send: vi.fn(async (text: string) => ({

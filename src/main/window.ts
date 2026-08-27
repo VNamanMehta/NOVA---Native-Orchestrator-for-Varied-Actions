@@ -15,7 +15,6 @@ import {
 
 const WINDOW_WIDTH = 720
 const RESIZE_THRESHOLD = 2
-const BYPASS_PINNED_WINDOW_MS = 500
 
 let mainWindow: BrowserWindow | null = null
 let pinned = false
@@ -26,7 +25,6 @@ let primed = false
 let sizeAuthority: SizeAuthority = 'content'
 let lastContentHeight = MIN_WINDOW_HEIGHT
 let readyCallbacks: Array<() => void> = []
-let bypassPinnedUntil = 0
 
 function raiseWindow(): void {
   mainWindow?.moveTop()
@@ -42,7 +40,10 @@ function positionWindow(): void {
   mainWindow.setPosition(x, y)
 }
 
-function applyResize(contentHeight: number, bypassPinned: boolean): void {
+// bypassPinned is true only for the report that follows a deliberate
+// structural UI change (see ContentHeightReport in shared/ipc.ts).
+export function resizeToContent(contentHeight: number, bypassPinned = false): void {
+  lastContentHeight = contentHeight
   if (!mainWindow) return
   if (!shouldApplyContentHeight(sizeAuthority, pinned, bypassPinned)) return
   const [x, y] = mainWindow.getPosition()
@@ -51,18 +52,6 @@ function applyResize(contentHeight: number, bypassPinned: boolean): void {
   const target = clampContentHeight(contentHeight, workArea, y)
   if (Math.abs(target - currentHeight) < RESIZE_THRESHOLD) return
   mainWindow.setBounds({ x, y, width, height: target })
-}
-
-export function resizeToContent(contentHeight: number): void {
-  lastContentHeight = contentHeight
-  applyResize(contentHeight, Date.now() < bypassPinnedUntil)
-}
-
-// Time-bounded bypass so a structural UI change can resize a pinned window
-// once, without risking staying armed forever if that resize is a no-op.
-export function allowResizeOnce(): void {
-  bypassPinnedUntil = Date.now() + BYPASS_PINNED_WINDOW_MS
-  applyResize(lastContentHeight, true)
 }
 
 export function resetWindowSize(): void {
@@ -99,7 +88,6 @@ export function createWindow(): BrowserWindow {
   sizeAuthority = 'content'
   lastContentHeight = MIN_WINDOW_HEIGHT
   readyCallbacks = []
-  bypassPinnedUntil = 0
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,

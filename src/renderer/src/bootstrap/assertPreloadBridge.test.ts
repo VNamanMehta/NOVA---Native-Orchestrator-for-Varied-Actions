@@ -55,9 +55,7 @@ describe('assertPreloadBridge', () => {
     vi.stubGlobal('api', {})
     const container = document.createElement('div')
 
-    expect(() => assertPreloadBridge(container)).toThrow(
-      /window\.reportContentHeight, window\.notifyStructuralUiChange, chat\.send/
-    )
+    expect(() => assertPreloadBridge(container)).toThrow(/window\.reportContentHeight, chat\.send/)
   })
 
   it('requires the new settings and events leaves', () => {

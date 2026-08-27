@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MainToRendererChannels } from '../../shared/ipc'
 import { MAX_HEIGHT_FRACTION } from '../../shared/layout'
 import { useReportContentHeight } from './hooks/useReportContentHeight'
@@ -33,7 +33,13 @@ function usePanelMaxHeight(): number {
 
 function App(): React.JSX.Element {
   const contentRef = useRef<HTMLDivElement>(null)
-  useReportContentHeight(contentRef)
+  const structuralChangeRef = useRef(false)
+  const consumeStructuralChange = useCallback(() => {
+    const value = structuralChangeRef.current
+    structuralChangeRef.current = false
+    return value
+  }, [])
+  useReportContentHeight(contentRef, consumeStructuralChange)
   const { messages, isPending, send, retry } = useConversation()
   const maxPanelHeight = usePanelMaxHeight()
 
@@ -65,10 +71,10 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [closeSettings])
 
-  // View swaps and the no-key warning are structural changes, not organic
-  // growth — let them resize a pinned window instead of staying frozen.
+  // Flags the next content-height report as a structural change (view swap,
+  // no-key warning), not organic growth, so it can resize a pinned window.
   useEffect(() => {
-    window.api.window.notifyStructuralUiChange()
+    structuralChangeRef.current = true
   }, [view, apiKeyConfigured])
 
   return (
