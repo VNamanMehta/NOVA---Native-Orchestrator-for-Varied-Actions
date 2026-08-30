@@ -31,9 +31,8 @@ export function SettingsPanel(): React.JSX.Element {
   const [syncedProvider, setSyncedProvider] = useState(settings.activeProvider)
   const radioRefs = useRef<Partial<Record<ProviderId, HTMLButtonElement | null>>>({})
 
-  // Tab stop tracks visible focus, not the async-confirmed selection — so a
-  // failed setActiveProvider can't strand the roving tabindex off-screen.
-  // Adjusted during render (React's recommended pattern), not in an effect.
+  // Tab stop tracks focus, not the async-confirmed selection, so a failed
+  // setActiveProvider can't strand it — adjusted during render, not an effect.
   if (settings.activeProvider !== syncedProvider) {
     setSyncedProvider(settings.activeProvider)
     setTabStop(settings.activeProvider)
