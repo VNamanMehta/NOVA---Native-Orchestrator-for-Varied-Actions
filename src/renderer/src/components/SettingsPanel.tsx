@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { ALL_PROVIDERS, isProviderEnabled, type ProviderId } from '../../../shared/domain'
+import {
+  ALL_PROVIDERS,
+  ENABLED_PROVIDERS,
+  isProviderEnabled,
+  type ProviderId
+} from '../../../shared/domain'
 import { useAppStore } from '../store/appStore'
 import { cn } from '../lib/utils'
 
@@ -9,8 +14,6 @@ const PROVIDER_LABELS: Record<ProviderId, string> = {
   openai: 'OpenAI',
   ollama: 'Ollama (local)'
 }
-
-const ENABLED_PROVIDERS = ALL_PROVIDERS.filter(isProviderEnabled)
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -24,7 +27,17 @@ export function SettingsPanel(): React.JSX.Element {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
   const [returnToChatOnDismiss, setReturnToChatOnDismiss] = useState(false)
+  const [tabStop, setTabStop] = useState(settings.activeProvider)
+  const [syncedProvider, setSyncedProvider] = useState(settings.activeProvider)
   const radioRefs = useRef<Partial<Record<ProviderId, HTMLButtonElement | null>>>({})
+
+  // Tab stop tracks visible focus, not the async-confirmed selection — so a
+  // failed setActiveProvider can't strand the roving tabindex off-screen.
+  // Adjusted during render (React's recommended pattern), not in an effect.
+  if (settings.activeProvider !== syncedProvider) {
+    setSyncedProvider(settings.activeProvider)
+    setTabStop(settings.activeProvider)
+  }
 
   const showEditableField = !settings.apiKeyConfigured || replacing
 
@@ -55,10 +68,11 @@ export function SettingsPanel(): React.JSX.Element {
           : 0
     if (direction === 0) return
     event.preventDefault()
-    const currentIndex = ENABLED_PROVIDERS.indexOf(settings.activeProvider)
+    const currentIndex = ENABLED_PROVIDERS.indexOf(tabStop)
     const base = currentIndex === -1 ? 0 : currentIndex
     const next =
       ENABLED_PROVIDERS[(base + direction + ENABLED_PROVIDERS.length) % ENABLED_PROVIDERS.length]
+    setTabStop(next)
     radioRefs.current[next]?.focus()
     void handleSelectProvider(next)
   }
@@ -111,7 +125,7 @@ export function SettingsPanel(): React.JSX.Element {
                 role="radio"
                 aria-checked={selected}
                 disabled={!enabled}
-                tabIndex={selected ? 0 : -1}
+                tabIndex={provider === tabStop ? 0 : -1}
                 onClick={() => handleSelectProvider(provider)}
                 onKeyDown={handleRadioKeyDown}
                 className={cn(
