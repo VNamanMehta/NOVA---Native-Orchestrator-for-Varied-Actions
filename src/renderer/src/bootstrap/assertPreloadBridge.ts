@@ -2,7 +2,14 @@
 // window.api with no defensive chaining. Checks leaves, not just `api`, since a
 // partial bridge would otherwise pass here and crash at the call site.
 // Keep in sync with NovaApi.
-const REQUIRED_LEAVES = ['window.reportContentHeight', 'chat.send'] as const
+const REQUIRED_LEAVES = [
+  'window.reportContentHeight',
+  'chat.send',
+  'settings.get',
+  'settings.setApiKey',
+  'settings.setActiveProvider',
+  'events.on'
+] as const
 
 export function assertPreloadBridge(container: HTMLElement): void {
   const missing = REQUIRED_LEAVES.filter((path) => typeof resolve(window.api, path) !== 'function')

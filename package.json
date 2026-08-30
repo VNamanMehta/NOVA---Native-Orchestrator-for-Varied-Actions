@@ -22,7 +22,9 @@
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.6.0"
+    "electron-store": "^11.0.2",
+    "tailwind-merge": "^3.6.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

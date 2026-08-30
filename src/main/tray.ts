@@ -6,15 +6,26 @@ import {
   resetWindowSize,
   setPinned,
   showWindow,
-  toggleWindowVisibility
+  toggleWindowVisibility,
+  whenReady
 } from './window'
 import { registerTray } from './utils/trayBounds'
+import { pushOpenSettings } from './ipc/push'
 
 function buildMenu(): Menu {
   return Menu.buildFromTemplate([
     {
       label: 'Show Nova',
       click: () => showWindow()
+    },
+    {
+      label: 'Open Settings',
+      click: () => {
+        showWindow()
+        // The renderer's push listener only exists once mounted — gate on
+        // that so the push isn't silently dropped before it exists.
+        whenReady(() => pushOpenSettings())
+      }
     },
     {
       label: 'Pin Nova',

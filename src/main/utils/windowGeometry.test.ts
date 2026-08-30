@@ -70,6 +70,14 @@ describe('shouldApplyContentHeight', () => {
   it('ignores content height when pinned and manual', () => {
     expect(shouldApplyContentHeight('manual', true)).toBe(false)
   })
+
+  it('a one-shot bypass overrides the pinned block under content authority', () => {
+    expect(shouldApplyContentHeight('content', true, true)).toBe(true)
+  })
+
+  it('a one-shot bypass does not override manual authority', () => {
+    expect(shouldApplyContentHeight('manual', true, true)).toBe(false)
+  })
 })
 
 describe('resetBounds', () => {

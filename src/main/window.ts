@@ -24,6 +24,7 @@ let pendingShow = false
 let primed = false
 let sizeAuthority: SizeAuthority = 'content'
 let lastContentHeight = MIN_WINDOW_HEIGHT
+let readyCallbacks: Array<() => void> = []
 
 function raiseWindow(): void {
   mainWindow?.moveTop()
@@ -39,10 +40,12 @@ function positionWindow(): void {
   mainWindow.setPosition(x, y)
 }
 
-export function resizeToContent(contentHeight: number): void {
+// bypassPinned is true only for the report that follows a deliberate
+// structural UI change (see ContentHeightReport in shared/ipc.ts).
+export function resizeToContent(contentHeight: number, bypassPinned = false): void {
   lastContentHeight = contentHeight
   if (!mainWindow) return
-  if (!shouldApplyContentHeight(sizeAuthority, pinned)) return
+  if (!shouldApplyContentHeight(sizeAuthority, pinned, bypassPinned)) return
   const [x, y] = mainWindow.getPosition()
   const [width, currentHeight] = mainWindow.getSize()
   const { workArea } = screen.getDisplayMatching(mainWindow.getBounds())
@@ -84,6 +87,7 @@ export function createWindow(): BrowserWindow {
   primed = false
   sizeAuthority = 'content'
   lastContentHeight = MIN_WINDOW_HEIGHT
+  readyCallbacks = []
 
   mainWindow = new BrowserWindow({
     width: WINDOW_WIDTH,
@@ -105,6 +109,7 @@ export function createWindow(): BrowserWindow {
 
   mainWindow.once('ready-to-show', () => {
     readyToShow = true
+    readyCallbacks.splice(0).forEach((callback) => callback())
     if (pendingShow) {
       pendingShow = false
       showWindow()
@@ -149,6 +154,16 @@ export function createWindow(): BrowserWindow {
 
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow
+}
+
+// Runs callback once the window has painted (immediately if already true) —
+// for gating anything that assumes the renderer has mounted.
+export function whenReady(callback: () => void): void {
+  if (readyToShow) {
+    callback()
+  } else {
+    readyCallbacks.push(callback)
+  }
 }
 
 export function setQuitting(value: boolean): void {

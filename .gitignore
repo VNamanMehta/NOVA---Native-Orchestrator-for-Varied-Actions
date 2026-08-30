@@ -9,6 +9,8 @@ build/*
 !build/icon.icns
 !build/icon.ico
 !build/icon.png
+tsconfig.node.tsbuildinfo
+tsconfig.web.tsbuildinfo
 
 # electron-builder release artifacts
 release/
@@ -40,3 +42,4 @@ dev-app-update.yml
 docs/
 CLAUDE.md
 .claude/
+PRODUCT.md

@@ -1,0 +1,217 @@
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { createApiStub } from '../../../../vitest.setup'
+import { ENCRYPTION_UNAVAILABLE_MESSAGE } from '../../../main/config/secrets'
+import { useAppStore } from '../store/appStore'
+import { SettingsPanel } from './SettingsPanel'
+
+describe('SettingsPanel', () => {
+  it('renders every provider, with only Grok selectable', () => {
+    render(<SettingsPanel />)
+
+    const grok = screen.getByRole('radio', { name: /grok/i })
+    expect(grok).toHaveAttribute('aria-checked', 'true')
+    expect(grok).toBeEnabled()
+
+    for (const name of [/anthropic/i, /openai/i, /ollama/i]) {
+      expect(screen.getByRole('radio', { name })).toBeDisabled()
+    }
+    expect(screen.getAllByText('Coming soon')).toHaveLength(3)
+  })
+
+  it('shows an empty editable key field with Save disabled when no key is configured', () => {
+    render(<SettingsPanel />)
+
+    expect(screen.getByPlaceholderText('Paste your API key')).toHaveValue('')
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled()
+  })
+
+  it('saves a typed key, shows confirmation, and switches to the configured view', async () => {
+    const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    const user = userEvent.setup()
+    render(<SettingsPanel />)
+
+    await user.type(screen.getByPlaceholderText('Paste your API key'), 'sk-test-123')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
+    expect(setApiKey).toHaveBeenCalledWith('grok', 'sk-test-123')
+    expect(screen.getByText('API key configured')).toBeInTheDocument()
+  })
+
+  it('shows a configured placeholder with Replace when a key already exists', () => {
+    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: true } })
+    render(<SettingsPanel />)
+
+    expect(screen.getByText('API key configured')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Paste your API key')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }))
+    expect(screen.getByPlaceholderText('Paste your API key')).toBeInTheDocument()
+  })
+
+  it('does not activate a disabled provider on click', () => {
+    const setActiveProvider = vi.fn()
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setActiveProvider }
+    })
+    render(<SettingsPanel />)
+
+    fireEvent.click(screen.getByRole('radio', { name: /anthropic/i }))
+
+    expect(setActiveProvider).not.toHaveBeenCalled()
+  })
+
+  it('shows an error message when saving the key fails', async () => {
+    const setApiKey = vi.fn(async () => ({ ok: false as const, error: { message: 'boom' } }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    const user = userEvent.setup()
+    render(<SettingsPanel />)
+
+    await user.type(screen.getByPlaceholderText('Paste your API key'), 'sk-test-123')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => expect(screen.getByTestId('save-error')).toHaveTextContent('boom'))
+  })
+
+  it('surfaces the real encryption-unavailable message when OS encryption is off', async () => {
+    const setApiKey = vi.fn(async () => ({
+      ok: false as const,
+      error: { message: ENCRYPTION_UNAVAILABLE_MESSAGE }
+    }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    const user = userEvent.setup()
+    render(<SettingsPanel />)
+
+    await user.type(screen.getByPlaceholderText('Paste your API key'), 'sk-test-123')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('save-error')).toHaveTextContent(ENCRYPTION_UNAVAILABLE_MESSAGE)
+    )
+  })
+
+  it('auto-dismisses the saved confirmation after 2 seconds', async () => {
+    vi.useFakeTimers()
+    const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    render(<SettingsPanel />)
+
+    // userEvent hangs under vitest 4's fake timers here; fireEvent +
+    // vi.waitFor exercise the same code path and resolve immediately.
+    fireEvent.change(screen.getByPlaceholderText('Paste your API key'), {
+      target: { value: 'sk-test-123' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await vi.waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+
+    expect(screen.queryByTestId('save-confirmation')).not.toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('returns to chat after the confirmation dismisses on a first-time key save', async () => {
+    vi.useFakeTimers()
+    useAppStore.setState({
+      view: 'settings',
+      settings: { activeProvider: 'grok', apiKeyConfigured: false }
+    })
+    const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    render(<SettingsPanel />)
+
+    fireEvent.change(screen.getByPlaceholderText('Paste your API key'), {
+      target: { value: 'sk-test-123' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await vi.waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+
+    expect(useAppStore.getState().view).toBe('chat')
+    vi.useRealTimers()
+  })
+
+  it('does not return to chat after replacing an already-configured key', async () => {
+    vi.useFakeTimers()
+    useAppStore.setState({
+      view: 'settings',
+      settings: { activeProvider: 'grok', apiKeyConfigured: true }
+    })
+    const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setApiKey }
+    })
+    render(<SettingsPanel />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }))
+    fireEvent.change(screen.getByPlaceholderText('Paste your API key'), {
+      target: { value: 'sk-new-456' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await vi.waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000)
+    })
+
+    expect(useAppStore.getState().view).toBe('settings')
+    vi.useRealTimers()
+  })
+
+  it('gives only the selected radio a tab stop, per the roving-tabindex pattern', () => {
+    render(<SettingsPanel />)
+
+    expect(screen.getByRole('radio', { name: /grok/i })).toHaveAttribute('tabIndex', '0')
+    for (const name of [/anthropic/i, /openai/i, /ollama/i]) {
+      expect(screen.getByRole('radio', { name })).toHaveAttribute('tabIndex', '-1')
+    }
+  })
+
+  it('keeps focus and selection on the sole enabled radio when an arrow key wraps around', async () => {
+    const setActiveProvider = vi.fn(async () => ({ ok: true as const, value: undefined }))
+    vi.stubGlobal('api', {
+      ...createApiStub(),
+      settings: { ...createApiStub().settings, setActiveProvider }
+    })
+    const user = userEvent.setup()
+    render(<SettingsPanel />)
+
+    const grok = screen.getByRole('radio', { name: /grok/i })
+    grok.focus()
+    await user.keyboard('{ArrowDown}')
+
+    expect(grok).toHaveFocus()
+    expect(setActiveProvider).not.toHaveBeenCalled()
+  })
+
+  it('closes settings when Close is clicked', () => {
+    render(<SettingsPanel />)
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(useAppStore.getState().view).toBe('chat')
+  })
+})

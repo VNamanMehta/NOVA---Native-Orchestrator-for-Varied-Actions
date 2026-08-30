@@ -45,8 +45,14 @@ export function clampContentHeight(
 
 export type SizeAuthority = 'content' | 'manual'
 
-export function shouldApplyContentHeight(authority: SizeAuthority, pinned: boolean): boolean {
-  return authority === 'content' && !pinned
+// bypassPinned lets a deliberate structural UI change (not organic content
+// growth) resize a pinned window; callers decide how/when it applies.
+export function shouldApplyContentHeight(
+  authority: SizeAuthority,
+  pinned: boolean,
+  bypassPinned = false
+): boolean {
+  return authority === 'content' && (!pinned || bypassPinned)
 }
 
 export function resetBounds(
