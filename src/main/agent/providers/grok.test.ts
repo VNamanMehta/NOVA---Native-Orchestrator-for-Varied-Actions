@@ -34,7 +34,10 @@ describe('createGrokProvider', () => {
       'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n',
       'data: [DONE]\n\n'
     ])
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(body, { status: 200 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(body, { status: 200 }))
+    )
 
     const provider = createGrokProvider('sk-test')
     const events = await collect(provider.chat([{ role: 'user', content: 'hi' }], []))
@@ -47,9 +50,8 @@ describe('createGrokProvider', () => {
   })
 
   it('sends stream:true, the model, and the messages in the request body with an auth header', async () => {
-    const fetchMock = vi.fn(
-      async (_url: string, _init: RequestInit) =>
-        new Response(sseStream(['data: [DONE]\n\n']), { status: 200 })
+    const fetchMock = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(
+      async () => new Response(sseStream(['data: [DONE]\n\n']), { status: 200 })
     )
     vi.stubGlobal('fetch', fetchMock)
 
@@ -68,28 +70,40 @@ describe('createGrokProvider', () => {
   })
 
   it('maps a 401 response to an AUTH error before reading the stream', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 401 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 401 }))
+    )
 
     const provider = createGrokProvider('sk-bad')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'AUTH' })
   })
 
   it('maps a 403 response to an AUTH error', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 403 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 403 }))
+    )
 
     const provider = createGrokProvider('sk-bad')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'AUTH' })
   })
 
   it('maps a 429 response to a RATE_LIMIT error', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 429 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 429 }))
+    )
 
     const provider = createGrokProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'RATE_LIMIT' })
   })
 
   it('maps another non-2xx response to a PROVIDER_ERROR', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 500 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 500 }))
+    )
 
     const provider = createGrokProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'PROVIDER_ERROR' })
@@ -114,15 +128,16 @@ describe('createGrokProvider', () => {
       pull(controller) {
         pullCount += 1
         if (pullCount === 1) {
-          controller.enqueue(
-            encoder.encode('data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n')
-          )
+          controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n'))
           return
         }
         controller.error(new Error('connection reset'))
       }
     })
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(body, { status: 200 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(body, { status: 200 }))
+    )
 
     const provider = createGrokProvider('sk-test')
     const events: ProviderEvent[] = []
@@ -136,7 +151,10 @@ describe('createGrokProvider', () => {
 
   it('maps a malformed SSE frame to a PROVIDER_ERROR', async () => {
     const body = sseStream(['data: not-json\n\n'])
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(body, { status: 200 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(body, { status: 200 }))
+    )
 
     const provider = createGrokProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'PROVIDER_ERROR' })
