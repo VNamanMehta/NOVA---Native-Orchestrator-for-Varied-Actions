@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { MainToRendererChannels, type IpcResult, type Message } from '../../../shared/ipc'
 import type { ChatMessage } from '../types/chat'
 
 export interface UseConversation {
   messages: ChatMessage[]
   isPending: boolean
+  hasUnresolvedTurn: boolean
   send: (text: string) => void
   retry: (assistantMessageId: string) => void
 }
@@ -13,26 +15,38 @@ const GENERIC_ERROR = 'Something went wrong. Please try again.'
 export function useConversation(): UseConversation {
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  const runTurn = useCallback((text: string, assistantId: string) => {
-    const settle = (patch: Partial<ChatMessage>): void => {
-      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, ...patch } : m)))
-    }
-    window.api.chat.send(text).then(
-      (result) => {
-        settle(
-          result.ok
-            ? { content: result.value.content, status: 'complete' }
-            : { content: result.error.message || GENERIC_ERROR, status: 'error' }
+  useEffect(() => {
+    return window.api.events.on(MainToRendererChannels.chatToken, ({ token }) => {
+      setMessages((prev) => {
+        const index = prev.findIndex(
+          (m) => m.role === 'assistant' && (m.status === 'pending' || m.status === 'streaming')
         )
-      },
-      () => settle({ content: GENERIC_ERROR, status: 'error' })
+        if (index === -1) return prev
+        const next = [...prev]
+        const current = next[index]
+        next[index] = { ...current, status: 'streaming', content: current.content + token }
+        return next
+      })
+    })
+  }, [])
+
+  const settle = useCallback((assistantId: string, result: IpcResult<Message>) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== assistantId) return m
+        if (result.ok) return { ...m, status: 'complete', content: result.value.content }
+        return { ...m, status: 'error', errorMessage: result.error.message || GENERIC_ERROR }
+      })
     )
   }, [])
+
+  const hasUnresolvedTurn =
+    messages.length > 0 && messages[messages.length - 1].status !== 'complete'
 
   const send = useCallback(
     (text: string) => {
       const trimmed = text.trim()
-      if (trimmed.length === 0) return
+      if (trimmed.length === 0 || hasUnresolvedTurn) return
 
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
@@ -48,30 +62,35 @@ export function useConversation(): UseConversation {
       }
 
       setMessages((prev) => [...prev, userMessage, assistantMessage])
-      runTurn(trimmed, assistantMessage.id)
+      window.api.chat.send(trimmed).then(
+        (result) => settle(assistantMessage.id, result),
+        () => settle(assistantMessage.id, { ok: false, error: { message: GENERIC_ERROR } })
+      )
     },
-    [runTurn]
+    [hasUnresolvedTurn, settle]
+  )
+
+  const retry = useCallback(
+    (assistantMessageId: string) => {
+      const last = messages[messages.length - 1]
+      if (!last || last.id !== assistantMessageId || last.status !== 'error') return
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMessageId
+            ? { ...m, status: 'pending', content: '', errorMessage: undefined }
+            : m
+        )
+      )
+      window.api.chat.retry().then(
+        (result) => settle(assistantMessageId, result),
+        () => settle(assistantMessageId, { ok: false, error: { message: GENERIC_ERROR } })
+      )
+    },
+    [messages, settle]
   )
 
   const isPending = messages.some((m) => m.status === 'pending')
 
-  const retry = useCallback(
-    (assistantMessageId: string) => {
-      if (isPending) return
-      const index = messages.findIndex((m) => m.id === assistantMessageId)
-      if (index <= 0) return
-      const userMessage = messages[index - 1]
-      if (userMessage.role !== 'user') return
-
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMessageId ? { ...m, content: '', status: 'pending' } : m
-        )
-      )
-      runTurn(userMessage.content, assistantMessageId)
-    },
-    [messages, isPending, runTurn]
-  )
-
-  return { messages, isPending, send, retry }
+  return { messages, isPending, hasUnresolvedTurn, send, retry }
 }
