@@ -38,6 +38,7 @@ export interface RendererToMainPayloads {
 
 export const RequestChannels = {
   chatSend: 'renderer->main:chat-send',
+  chatRetry: 'renderer->main:chat-retry',
   settingsGet: 'renderer->main:settings-get',
   settingsSetApiKey: 'renderer->main:settings-set-api-key',
   settingsSetActiveProvider: 'renderer->main:settings-set-active-provider'
@@ -47,6 +48,7 @@ export type RequestChannel = (typeof RequestChannels)[keyof typeof RequestChanne
 
 export interface RequestPayloads {
   [RequestChannels.chatSend]: string
+  [RequestChannels.chatRetry]: undefined
   [RequestChannels.settingsGet]: undefined
   [RequestChannels.settingsSetApiKey]: { provider: ProviderId; key: string }
   [RequestChannels.settingsSetActiveProvider]: { provider: ProviderId }
@@ -54,6 +56,7 @@ export interface RequestPayloads {
 
 export interface ResponsePayloads {
   [RequestChannels.chatSend]: IpcResult<Message>
+  [RequestChannels.chatRetry]: IpcResult<Message>
   [RequestChannels.settingsGet]: IpcResult<SettingsState>
   [RequestChannels.settingsSetApiKey]: IpcResult<void>
   [RequestChannels.settingsSetActiveProvider]: IpcResult<void>
@@ -73,6 +76,12 @@ export const RequestValidators: {
       throw new Error('chat:send expects a string payload')
     }
     return payload
+  },
+  [RequestChannels.chatRetry]: (payload) => {
+    if (payload !== undefined) {
+      throw new Error('chat:retry expects no payload')
+    }
+    return undefined
   },
   [RequestChannels.settingsGet]: (payload) => {
     if (payload !== undefined) {
@@ -134,6 +143,7 @@ export interface NovaApi {
     send: (
       text: RequestPayloads[typeof RequestChannels.chatSend]
     ) => Promise<ResponsePayloads[typeof RequestChannels.chatSend]>
+    retry: () => Promise<ResponsePayloads[typeof RequestChannels.chatRetry]>
   }
   settings: {
     get: () => Promise<ResponsePayloads[typeof RequestChannels.settingsGet]>

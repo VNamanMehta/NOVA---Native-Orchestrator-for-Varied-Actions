@@ -48,14 +48,15 @@ describe('createGrokProvider', () => {
 
   it('sends stream:true, the model, and the messages in the request body with an auth header', async () => {
     const fetchMock = vi.fn(
-      async () => new Response(sseStream(['data: [DONE]\n\n']), { status: 200 })
+      async (_url: string, _init: RequestInit) =>
+        new Response(sseStream(['data: [DONE]\n\n']), { status: 200 })
     )
     vi.stubGlobal('fetch', fetchMock)
 
     const provider = createGrokProvider('sk-test')
     await collect(provider.chat([{ role: 'user', content: 'hi' }], []))
 
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const [url, init] = fetchMock.mock.calls[0]
     expect(url).toBe('https://api.x.ai/v1/chat/completions')
     const body = JSON.parse(init.body as string)
     expect(body).toMatchObject({

@@ -25,6 +25,18 @@ describe('RequestValidators', () => {
     })
   })
 
+  describe(RequestChannels.chatRetry, () => {
+    const validate = RequestValidators[RequestChannels.chatRetry]
+
+    it('accepts undefined (no payload)', () => {
+      expect(validate(undefined)).toBeUndefined()
+    })
+
+    it('rejects a non-undefined payload', () => {
+      expect(() => validate({})).toThrow(/expects no payload/)
+    })
+  })
+
   describe(RequestChannels.settingsGet, () => {
     const validate = RequestValidators[RequestChannels.settingsGet]
 

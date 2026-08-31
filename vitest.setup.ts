@@ -15,6 +15,10 @@ export function createApiStub(): NovaApi {
       send: vi.fn(async (text: string) => ({
         ok: true as const,
         value: { role: 'assistant' as const, content: text }
+      })),
+      retry: vi.fn(async () => ({
+        ok: true as const,
+        value: { role: 'assistant' as const, content: '' }
       }))
     },
     settings: {
