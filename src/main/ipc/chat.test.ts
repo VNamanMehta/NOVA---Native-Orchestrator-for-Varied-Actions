@@ -1,16 +1,40 @@
-import { describe, expect, it } from 'vitest'
-import { echo } from './chat'
+import { describe, expect, it, vi } from 'vitest'
+
+const runTurn = vi.fn()
+const retryLastTurnInLoop = vi.fn()
+
+vi.mock('../agent/loop', () => ({
+  runTurn: (...args: unknown[]) => runTurn(...args),
+  retryLastTurn: (...args: unknown[]) => retryLastTurnInLoop(...args)
+}))
+
+import { ProviderError } from '../agent/providers/types'
+import { retryLastTurn, sendMessage } from './chat'
 import { runSafely } from './safeHandle'
 
-describe('echo', () => {
-  it('returns the text as an assistant message', async () => {
-    expect(await echo('hi')).toEqual({ role: 'assistant', content: 'hi' })
+describe('sendMessage', () => {
+  it('delegates to the agent loop', async () => {
+    runTurn.mockResolvedValue({ role: 'assistant', content: 'hi' })
+
+    expect(await sendMessage('hello')).toEqual({ role: 'assistant', content: 'hi' })
+    expect(runTurn).toHaveBeenCalledWith('hello')
   })
 
-  it('produces an IpcResult<Message> envelope when run through runSafely', async () => {
-    expect(await runSafely(() => echo('hi'))).toEqual({
-      ok: true,
-      value: { role: 'assistant', content: 'hi' }
+  it('wraps a thrown ProviderError with its code when run through runSafely', async () => {
+    runTurn.mockRejectedValue(new ProviderError('AUTH', 'No API key configured for grok.'))
+
+    expect(await runSafely(() => sendMessage('hello'))).toEqual({
+      ok: false,
+      error: { message: 'No API key configured for grok.', code: 'AUTH' }
     })
+  })
+})
+
+describe('retryLastTurn', () => {
+  it('delegates to the agent loop', async () => {
+    retryLastTurnInLoop.mockResolvedValue({ role: 'assistant', content: 'ok now' })
+
+    expect(await retryLastTurn()).toEqual({ role: 'assistant', content: 'ok now' })
+    expect(retryLastTurnInLoop).toHaveBeenCalled()
   })
 })
