@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { abortActiveStream } from './agent/loop'
 import { createWindow, getMainWindow, setQuitting, showWindow } from './window'
 import { createTray } from './tray'
 import { destroyTray } from './utils/trayBounds'
@@ -41,6 +42,7 @@ if (!gotSingleInstanceLock) {
   app.on('before-quit', () => {
     setQuitting(true)
     destroyTray()
+    abortActiveStream()
   })
 
   app.on('will-quit', () => {
