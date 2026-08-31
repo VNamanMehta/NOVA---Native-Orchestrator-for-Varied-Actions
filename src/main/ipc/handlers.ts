@@ -2,7 +2,7 @@ import { ipcMain, type IpcMainEvent } from 'electron'
 import { RendererToMainChannels, RequestChannels } from '../../shared/ipc'
 import { resizeToContent } from '../window'
 import { handleRequest, unregisterRequestHandlers } from './handleRequest'
-import { echo } from './chat'
+import { retryLastTurn, sendMessage } from './chat'
 import { getSettings, saveActiveProvider, saveApiKey } from './settings'
 
 function isContentHeightReport(
@@ -24,7 +24,8 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  handleRequest(RequestChannels.chatSend, (text) => echo(text))
+  handleRequest(RequestChannels.chatSend, (text) => sendMessage(text))
+  handleRequest(RequestChannels.chatRetry, () => retryLastTurn())
   handleRequest(RequestChannels.settingsGet, () => getSettings())
   handleRequest(RequestChannels.settingsSetApiKey, ({ provider, key }) => saveApiKey(provider, key))
   handleRequest(RequestChannels.settingsSetActiveProvider, ({ provider }) =>
