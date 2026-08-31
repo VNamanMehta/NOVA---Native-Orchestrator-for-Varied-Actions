@@ -29,7 +29,8 @@ export function MessageItem({
       >
         {message.status === 'error' && (
           <span className="flex flex-col items-start gap-1">
-            <span className="text-destructive">{message.content}</span>
+            {message.content && <span>{message.content}</span>}
+            <span className="text-destructive">{message.errorMessage}</span>
             {!isUser && (
               <button
                 type="button"
@@ -43,7 +44,7 @@ export function MessageItem({
           </span>
         )}
 
-        {message.status === 'complete' && message.content}
+        {(message.status === 'complete' || message.status === 'streaming') && message.content}
       </div>
     </div>
   )
