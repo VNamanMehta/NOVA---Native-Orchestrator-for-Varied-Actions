@@ -5,6 +5,7 @@ import { MessageList } from './MessageList'
 interface ChatWindowProps {
   messages: ChatMessage[]
   isPending: boolean
+  hasUnresolvedTurn: boolean
   onSend: (text: string) => void
   onRetry: (id: string) => void
 }
@@ -12,13 +13,14 @@ interface ChatWindowProps {
 export function ChatWindow({
   messages,
   isPending,
+  hasUnresolvedTurn,
   onSend,
   onRetry
 }: ChatWindowProps): React.JSX.Element {
   return (
     <>
       <MessageList messages={messages} isPending={isPending} onRetry={onRetry} />
-      <InputBar onSend={onSend} disabled={isPending} />
+      <InputBar onSend={onSend} disabled={hasUnresolvedTurn} />
       {isPending && (
         <div
           data-testid="pending-indicator"
