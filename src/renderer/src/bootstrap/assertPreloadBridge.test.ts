@@ -51,6 +51,13 @@ describe('assertPreloadBridge', () => {
     expect(() => assertPreloadBridge(container)).toThrow(/chat\.send/)
   })
 
+  it('requires the chat.retry leaf', () => {
+    vi.stubGlobal('api', { ...createApiStub(), chat: { send: createApiStub().chat.send } })
+    const container = document.createElement('div')
+
+    expect(() => assertPreloadBridge(container)).toThrow(/chat\.retry/)
+  })
+
   it('names every missing leaf, not just the first', () => {
     vi.stubGlobal('api', {})
     const container = document.createElement('div')
