@@ -6,7 +6,6 @@ export interface UseConversation {
   messages: ChatMessage[]
   isPending: boolean
   isAwaitingReply: boolean
-  hasFailedTurn: boolean
   send: (text: string) => void
   retry: (assistantMessageId: string) => void
 }
@@ -42,21 +41,15 @@ export function useConversation(): UseConversation {
   }, [])
 
   const trailing = messages.length > 0 ? messages[messages.length - 1] : undefined
-  // Blocks a second chat:send/chat:retry from starting while the trailing
-  // turn is pending, streaming, OR errored — the retry-correlation invariant
-  // (at most one unresolved trailing turn) needs all three, not just
-  // in-flight ones. This stays internal to send()/retry()'s guards; UI
-  // disabling below intentionally uses a narrower check so an errored turn
-  // (which can persist indefinitely) never locks the input itself.
-  const hasUnresolvedTurn = trailing !== undefined && trailing.status !== 'complete'
+  // Only an in-flight reply blocks a new send — an errored trailing turn is
+  // resolved (main discards it and starts fresh on the next chat:send).
   const isAwaitingReply =
     trailing !== undefined && (trailing.status === 'pending' || trailing.status === 'streaming')
-  const hasFailedTurn = trailing !== undefined && trailing.status === 'error'
 
   const send = useCallback(
     (text: string) => {
       const trimmed = text.trim()
-      if (trimmed.length === 0 || hasUnresolvedTurn) return
+      if (trimmed.length === 0 || isAwaitingReply) return
 
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
@@ -77,7 +70,7 @@ export function useConversation(): UseConversation {
         () => settle(assistantMessage.id, { ok: false, error: { message: GENERIC_ERROR } })
       )
     },
-    [hasUnresolvedTurn, settle]
+    [isAwaitingReply, settle]
   )
 
   const retry = useCallback(
@@ -102,5 +95,5 @@ export function useConversation(): UseConversation {
 
   const isPending = messages.some((m) => m.status === 'pending')
 
-  return { messages, isPending, isAwaitingReply, hasFailedTurn, send, retry }
+  return { messages, isPending, isAwaitingReply, send, retry }
 }

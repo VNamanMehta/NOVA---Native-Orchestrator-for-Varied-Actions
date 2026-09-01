@@ -75,6 +75,33 @@ describe('runTurn', () => {
     expect(result).toEqual({ role: 'assistant', content: 'Hello' })
   })
 
+  it('pops a stale failed turn before starting a new one, so a new send replaces it', async () => {
+    wasLastTurnFailed.mockReturnValue(true)
+    const order: string[] = []
+    popFailedAssistant.mockImplementation(() => order.push('pop'))
+    appendUser.mockImplementation(() => order.push('append'))
+    createProvider.mockReturnValue(
+      fakeProvider([{ type: 'done', message: { role: 'assistant', content: 'ok now' } }])
+    )
+
+    await runTurn('a fresh message')
+
+    expect(popFailedAssistant).toHaveBeenCalled()
+    expect(appendUser).toHaveBeenCalledWith('a fresh message')
+    expect(order).toEqual(['pop', 'append'])
+  })
+
+  it('does not pop anything when the last turn did not fail', async () => {
+    wasLastTurnFailed.mockReturnValue(false)
+    createProvider.mockReturnValue(
+      fakeProvider([{ type: 'done', message: { role: 'assistant', content: 'ok' } }])
+    )
+
+    await runTurn('hi')
+
+    expect(popFailedAssistant).not.toHaveBeenCalled()
+  })
+
   it('marks the turn failed with whatever partial text streamed in before the provider threw', async () => {
     createProvider.mockReturnValue(
       fakeProvider([{ type: 'text_delta', delta: 'Hel' }], new ProviderError('NETWORK', 'dropped'))

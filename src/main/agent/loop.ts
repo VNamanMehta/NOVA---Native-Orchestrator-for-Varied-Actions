@@ -45,6 +45,10 @@ async function streamProvider(): Promise<Message> {
 }
 
 export async function runTurn(text: string): Promise<Message> {
+  // A new send after a failed turn replaces it rather than stacking on top.
+  if (conversation.wasLastTurnFailed()) {
+    conversation.popFailedAssistant()
+  }
   conversation.appendUser(text)
   return streamProvider()
 }

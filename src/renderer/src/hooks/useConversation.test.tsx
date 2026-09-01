@@ -53,7 +53,6 @@ describe('useConversation', () => {
     expect(result.current.messages[1]).toMatchObject({ role: 'assistant', status: 'pending' })
     expect(result.current.isPending).toBe(true)
     expect(result.current.isAwaitingReply).toBe(true)
-    expect(result.current.hasFailedTurn).toBe(false)
     expect(send).toHaveBeenCalledWith('hello')
     resolveSend({ ok: true, value: { role: 'assistant', content: 'hi' } })
   })
@@ -101,7 +100,6 @@ describe('useConversation', () => {
     )
     expect(result.current.isPending).toBe(false)
     expect(result.current.isAwaitingReply).toBe(false)
-    expect(result.current.hasFailedTurn).toBe(false)
   })
 
   it('marks the placeholder as error, keeping any partial streamed content, when the envelope is not ok', async () => {
@@ -154,22 +152,23 @@ describe('useConversation', () => {
     expect(send).not.toHaveBeenCalled()
   })
 
-  it('blocks a second send while the previous turn is unresolved (pending or errored)', async () => {
-    const send = vi.fn().mockResolvedValueOnce({ ok: false, error: { message: 'boom' } })
+  it('blocks a second send while the previous turn is still pending', () => {
+    const send = vi.fn(() => new Promise<Awaited<ReturnType<NovaApi['chat']['send']>>>(() => {}))
     stubApi({ send })
 
     const { result } = renderHook(() => useConversation())
     act(() => result.current.send('first'))
-    await waitFor(() => expect(result.current.messages[1].status).toBe('error'))
-
     act(() => result.current.send('second'))
 
     expect(send).toHaveBeenCalledTimes(1)
     expect(result.current.messages).toHaveLength(2)
   })
 
-  it('does not report isAwaitingReply once a turn has failed, so the input stays usable', async () => {
-    const send = vi.fn().mockResolvedValueOnce({ ok: false, error: { message: 'boom' } })
+  it('allows a new send after the previous turn errored, as a fresh attempt', async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, error: { message: 'boom' } })
+      .mockResolvedValueOnce({ ok: true, value: { role: 'assistant', content: 'ok now' } })
     stubApi({ send })
 
     const { result } = renderHook(() => useConversation())
@@ -177,7 +176,14 @@ describe('useConversation', () => {
     await waitFor(() => expect(result.current.messages[1].status).toBe('error'))
 
     expect(result.current.isAwaitingReply).toBe(false)
-    expect(result.current.hasFailedTurn).toBe(true)
+    act(() => result.current.send('second'))
+
+    expect(send).toHaveBeenCalledTimes(2)
+    expect(send).toHaveBeenNthCalledWith(2, 'second')
+    expect(result.current.messages).toHaveLength(4)
+    await waitFor(() =>
+      expect(result.current.messages[3]).toMatchObject({ status: 'complete', content: 'ok now' })
+    )
   })
 
   it('retry calls chat.retry with no arguments and resolves the trailing errored message', async () => {

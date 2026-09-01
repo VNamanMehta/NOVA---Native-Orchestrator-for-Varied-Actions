@@ -5,20 +5,13 @@ import { useAppStore } from '../store/appStore'
 interface InputBarProps {
   onSend: (text: string) => void
   disabled: boolean
-  blockedByFailedTurn: boolean
-  onRetryFailedTurn: () => void
 }
 
 const SHAKE_DURATION_MS = 400
 
-const BLOCKED_NO_KEY_MESSAGE = "Can't send — set your Groq API key in /settings first."
+const BLOCKED_SEND_MESSAGE = "Can't send — set your Groq API key in /settings first."
 
-export function InputBar({
-  onSend,
-  disabled,
-  blockedByFailedTurn,
-  onRetryFailedTurn
-}: InputBarProps): React.JSX.Element {
+export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
   const [shakeCount, setShakeCount] = useState(0)
   const [announcement, setAnnouncement] = useState('')
@@ -48,34 +41,21 @@ export function InputBar({
   // so a repeated identical message still triggers a real DOM mutation.
   useEffect(() => {
     if (shakeCount === 0) return
-    const raf = requestAnimationFrame(() => setAnnouncement(BLOCKED_NO_KEY_MESSAGE))
+    const raf = requestAnimationFrame(() => setAnnouncement(BLOCKED_SEND_MESSAGE))
     return () => cancelAnimationFrame(raf)
   }, [shakeCount])
 
   const submit = (event: FormEvent): void => {
     event.preventDefault()
     const trimmed = draft.trim()
+    if (trimmed.length === 0) return
 
-    if (trimmed.length > 0) {
-      const command = matchCommand(trimmed)
-      if (command) {
-        command.run(store)
-        setDraft('')
-        return
-      }
-    }
-
-    // A failed turn is the only unresolved state that persists indefinitely
-    // (pending/streaming resolve on their own) and retry is the only valid
-    // next step — so Enter here always retries, even with an empty draft,
-    // rather than rejecting whatever (if anything) was typed.
-    if (blockedByFailedTurn) {
+    const command = matchCommand(trimmed)
+    if (command) {
+      command.run(store)
       setDraft('')
-      onRetryFailedTurn()
       return
     }
-
-    if (trimmed.length === 0) return
 
     if (!apiKeyConfigured) {
       setAnnouncement('')
@@ -112,15 +92,6 @@ export function InputBar({
           className="px-4 pb-3 text-xs text-destructive"
         >
           Set your Groq API key in /settings to start chatting.
-        </p>
-      )}
-      {apiKeyConfigured && blockedByFailedTurn && (
-        <p
-          data-testid="failed-turn-nudge"
-          role="status"
-          className="px-4 pb-3 text-xs text-destructive"
-        >
-          Press Enter to retry the failed message, or update your key in /settings.
         </p>
       )}
       <p role="alert" aria-live="assertive" className="sr-only">
