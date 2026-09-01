@@ -5,16 +5,24 @@ import { useAppStore } from '../store/appStore'
 interface InputBarProps {
   onSend: (text: string) => void
   disabled: boolean
+  blockedByFailedTurn: boolean
 }
 
 const SHAKE_DURATION_MS = 400
 
-const BLOCKED_SEND_MESSAGE = "Can't send — set your Groq API key in /settings first."
+const BLOCKED_NO_KEY_MESSAGE = "Can't send — set your Groq API key in /settings first."
+const BLOCKED_FAILED_TURN_MESSAGE =
+  "Can't send — retry the failed message first, or fix your key in /settings."
 
-export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element {
+export function InputBar({
+  onSend,
+  disabled,
+  blockedByFailedTurn
+}: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
   const [shakeCount, setShakeCount] = useState(0)
   const [announcement, setAnnouncement] = useState('')
+  const [blockedMessage, setBlockedMessage] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const store = useAppStore()
@@ -41,9 +49,16 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
   // so a repeated identical message still triggers a real DOM mutation.
   useEffect(() => {
     if (shakeCount === 0) return
-    const raf = requestAnimationFrame(() => setAnnouncement(BLOCKED_SEND_MESSAGE))
+    const raf = requestAnimationFrame(() => setAnnouncement(blockedMessage))
     return () => cancelAnimationFrame(raf)
-  }, [shakeCount])
+  }, [shakeCount, blockedMessage])
+
+  const blockSend = (message: string): void => {
+    setAnnouncement('')
+    setBlockedMessage(message)
+    setShakeCount((count) => count + 1)
+    setDraft('')
+  }
 
   const submit = (event: FormEvent): void => {
     event.preventDefault()
@@ -58,9 +73,12 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
     }
 
     if (!apiKeyConfigured) {
-      setAnnouncement('')
-      setShakeCount((count) => count + 1)
-      setDraft('')
+      blockSend(BLOCKED_NO_KEY_MESSAGE)
+      return
+    }
+
+    if (blockedByFailedTurn) {
+      blockSend(BLOCKED_FAILED_TURN_MESSAGE)
       return
     }
 
@@ -92,6 +110,15 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
           className="px-4 pb-3 text-xs text-destructive"
         >
           Set your Groq API key in /settings to start chatting.
+        </p>
+      )}
+      {apiKeyConfigured && blockedByFailedTurn && (
+        <p
+          data-testid="failed-turn-nudge"
+          role="status"
+          className="px-4 pb-3 text-xs text-destructive"
+        >
+          Retry the failed message above, or update your key in /settings.
         </p>
       )}
       <p role="alert" aria-live="assertive" className="sr-only">

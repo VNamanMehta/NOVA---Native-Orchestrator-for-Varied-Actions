@@ -5,7 +5,8 @@ import type { ChatMessage } from '../types/chat'
 export interface UseConversation {
   messages: ChatMessage[]
   isPending: boolean
-  hasUnresolvedTurn: boolean
+  isAwaitingReply: boolean
+  hasFailedTurn: boolean
   send: (text: string) => void
   retry: (assistantMessageId: string) => void
 }
@@ -40,8 +41,17 @@ export function useConversation(): UseConversation {
     )
   }, [])
 
-  const hasUnresolvedTurn =
-    messages.length > 0 && messages[messages.length - 1].status !== 'complete'
+  const trailing = messages.length > 0 ? messages[messages.length - 1] : undefined
+  // Blocks a second chat:send/chat:retry from starting while the trailing
+  // turn is pending, streaming, OR errored — the retry-correlation invariant
+  // (at most one unresolved trailing turn) needs all three, not just
+  // in-flight ones. This stays internal to send()/retry()'s guards; UI
+  // disabling below intentionally uses a narrower check so an errored turn
+  // (which can persist indefinitely) never locks the input itself.
+  const hasUnresolvedTurn = trailing !== undefined && trailing.status !== 'complete'
+  const isAwaitingReply =
+    trailing !== undefined && (trailing.status === 'pending' || trailing.status === 'streaming')
+  const hasFailedTurn = trailing !== undefined && trailing.status === 'error'
 
   const send = useCallback(
     (text: string) => {
@@ -92,5 +102,5 @@ export function useConversation(): UseConversation {
 
   const isPending = messages.some((m) => m.status === 'pending')
 
-  return { messages, isPending, hasUnresolvedTurn, send, retry }
+  return { messages, isPending, isAwaitingReply, hasFailedTurn, send, retry }
 }

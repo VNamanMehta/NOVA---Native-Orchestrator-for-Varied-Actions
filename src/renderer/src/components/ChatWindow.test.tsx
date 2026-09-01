@@ -11,7 +11,8 @@ describe('ChatWindow', () => {
       <ChatWindow
         messages={[]}
         isPending={false}
-        hasUnresolvedTurn={false}
+        isAwaitingReply={false}
+        hasFailedTurn={false}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />
@@ -24,7 +25,8 @@ describe('ChatWindow', () => {
       <ChatWindow
         messages={messages}
         isPending={false}
-        hasUnresolvedTurn={false}
+        isAwaitingReply={false}
+        hasFailedTurn={false}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />
@@ -33,12 +35,13 @@ describe('ChatWindow', () => {
     expect(screen.getByText('hi')).toBeInTheDocument()
   })
 
-  it('disables the input when there is an unresolved turn', () => {
+  it('disables the input while a reply is actively pending or streaming', () => {
     render(
       <ChatWindow
         messages={messages}
         isPending={false}
-        hasUnresolvedTurn={true}
+        isAwaitingReply={true}
+        hasFailedTurn={false}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />
@@ -51,7 +54,22 @@ describe('ChatWindow', () => {
       <ChatWindow
         messages={messages}
         isPending={false}
-        hasUnresolvedTurn={false}
+        isAwaitingReply={false}
+        hasFailedTurn={false}
+        onSend={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    )
+    expect(screen.getByRole('textbox', { name: 'Message Nova' })).not.toBeDisabled()
+  })
+
+  it('keeps the input enabled and typable when the trailing turn has failed', () => {
+    render(
+      <ChatWindow
+        messages={messages}
+        isPending={false}
+        isAwaitingReply={false}
+        hasFailedTurn={true}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />
@@ -64,7 +82,8 @@ describe('ChatWindow', () => {
       <ChatWindow
         messages={messages}
         isPending={false}
-        hasUnresolvedTurn={false}
+        isAwaitingReply={false}
+        hasFailedTurn={false}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />
@@ -79,7 +98,8 @@ describe('ChatWindow', () => {
       <ChatWindow
         messages={messages}
         isPending={true}
-        hasUnresolvedTurn={true}
+        isAwaitingReply={true}
+        hasFailedTurn={false}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />
@@ -90,12 +110,13 @@ describe('ChatWindow', () => {
     expect(input.compareDocumentPosition(indicator) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('hides the thinking indicator once streaming has started, even though the turn is still unresolved', () => {
+  it('hides the thinking indicator once streaming has started, even though a reply is still awaited', () => {
     render(
       <ChatWindow
         messages={messages}
         isPending={false}
-        hasUnresolvedTurn={true}
+        isAwaitingReply={true}
+        hasFailedTurn={false}
         onSend={vi.fn()}
         onRetry={vi.fn()}
       />

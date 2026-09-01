@@ -52,7 +52,8 @@ describe('useConversation', () => {
     })
     expect(result.current.messages[1]).toMatchObject({ role: 'assistant', status: 'pending' })
     expect(result.current.isPending).toBe(true)
-    expect(result.current.hasUnresolvedTurn).toBe(true)
+    expect(result.current.isAwaitingReply).toBe(true)
+    expect(result.current.hasFailedTurn).toBe(false)
     expect(send).toHaveBeenCalledWith('hello')
     resolveSend({ ok: true, value: { role: 'assistant', content: 'hi' } })
   })
@@ -99,7 +100,8 @@ describe('useConversation', () => {
       expect(result.current.messages[1]).toMatchObject({ content: 'world', status: 'complete' })
     )
     expect(result.current.isPending).toBe(false)
-    expect(result.current.hasUnresolvedTurn).toBe(false)
+    expect(result.current.isAwaitingReply).toBe(false)
+    expect(result.current.hasFailedTurn).toBe(false)
   })
 
   it('marks the placeholder as error, keeping any partial streamed content, when the envelope is not ok', async () => {
@@ -164,6 +166,18 @@ describe('useConversation', () => {
 
     expect(send).toHaveBeenCalledTimes(1)
     expect(result.current.messages).toHaveLength(2)
+  })
+
+  it('does not report isAwaitingReply once a turn has failed, so the input stays usable', async () => {
+    const send = vi.fn().mockResolvedValueOnce({ ok: false, error: { message: 'boom' } })
+    stubApi({ send })
+
+    const { result } = renderHook(() => useConversation())
+    act(() => result.current.send('first'))
+    await waitFor(() => expect(result.current.messages[1].status).toBe('error'))
+
+    expect(result.current.isAwaitingReply).toBe(false)
+    expect(result.current.hasFailedTurn).toBe(true)
   })
 
   it('retry calls chat.retry with no arguments and resolves the trailing errored message', async () => {

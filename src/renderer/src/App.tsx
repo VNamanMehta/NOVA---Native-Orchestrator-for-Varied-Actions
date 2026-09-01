@@ -42,7 +42,7 @@ function App(): React.JSX.Element {
     return value
   }, [])
   useReportContentHeight(contentRef, consumeStructuralChange)
-  const { messages, isPending, hasUnresolvedTurn, send, retry } = useConversation()
+  const { messages, isPending, isAwaitingReply, hasFailedTurn, send, retry } = useConversation()
   const maxPanelHeight = usePanelMaxHeight()
 
   const view = useAppStore((state) => state.view)
@@ -101,7 +101,8 @@ function App(): React.JSX.Element {
           <ChatWindow
             messages={messages}
             isPending={isPending}
-            hasUnresolvedTurn={hasUnresolvedTurn}
+            isAwaitingReply={isAwaitingReply}
+            hasFailedTurn={hasFailedTurn}
             onSend={send}
             onRetry={retry}
           />
