@@ -1,9 +1,15 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { ChatMessage } from '../types/chat'
 import { ChatWindow } from './ChatWindow'
 
 const messages: ChatMessage[] = [{ id: 'a', role: 'user', content: 'hi', status: 'complete' }]
+
+const failedMessages: ChatMessage[] = [
+  { id: 'user-1', role: 'user', content: 'hi', status: 'complete' },
+  { id: 'assistant-1', role: 'assistant', content: '', status: 'error', errorMessage: 'boom' }
+]
 
 describe('ChatWindow', () => {
   it('renders the input bar', () => {
@@ -75,6 +81,26 @@ describe('ChatWindow', () => {
       />
     )
     expect(screen.getByRole('textbox', { name: 'Message Nova' })).not.toBeDisabled()
+  })
+
+  it('retries the trailing failed message when Enter is pressed in the input', async () => {
+    const user = userEvent.setup()
+    const onRetry = vi.fn()
+    render(
+      <ChatWindow
+        messages={failedMessages}
+        isPending={false}
+        isAwaitingReply={false}
+        hasFailedTurn={true}
+        onSend={vi.fn()}
+        onRetry={onRetry}
+      />
+    )
+
+    const input = screen.getByRole('textbox', { name: 'Message Nova' })
+    await user.type(input, 'anything{Enter}')
+
+    expect(onRetry).toHaveBeenCalledWith('assistant-1')
   })
 
   it('renders the input below the message list', () => {

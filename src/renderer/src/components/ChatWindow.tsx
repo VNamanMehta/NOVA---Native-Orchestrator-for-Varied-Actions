@@ -19,10 +19,20 @@ export function ChatWindow({
   onSend,
   onRetry
 }: ChatWindowProps): React.JSX.Element {
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : undefined
+  const retryFailedTurn = (): void => {
+    if (hasFailedTurn && lastMessage) onRetry(lastMessage.id)
+  }
+
   return (
     <>
       <MessageList messages={messages} isPending={isPending} onRetry={onRetry} />
-      <InputBar onSend={onSend} disabled={isAwaitingReply} blockedByFailedTurn={hasFailedTurn} />
+      <InputBar
+        onSend={onSend}
+        disabled={isAwaitingReply}
+        blockedByFailedTurn={hasFailedTurn}
+        onRetryFailedTurn={retryFailedTurn}
+      />
       {isPending && (
         <div
           data-testid="pending-indicator"

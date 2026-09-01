@@ -6,23 +6,22 @@ interface InputBarProps {
   onSend: (text: string) => void
   disabled: boolean
   blockedByFailedTurn: boolean
+  onRetryFailedTurn: () => void
 }
 
 const SHAKE_DURATION_MS = 400
 
 const BLOCKED_NO_KEY_MESSAGE = "Can't send — set your Groq API key in /settings first."
-const BLOCKED_FAILED_TURN_MESSAGE =
-  "Can't send — retry the failed message first, or fix your key in /settings."
 
 export function InputBar({
   onSend,
   disabled,
-  blockedByFailedTurn
+  blockedByFailedTurn,
+  onRetryFailedTurn
 }: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
   const [shakeCount, setShakeCount] = useState(0)
   const [announcement, setAnnouncement] = useState('')
-  const [blockedMessage, setBlockedMessage] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const store = useAppStore()
@@ -49,36 +48,39 @@ export function InputBar({
   // so a repeated identical message still triggers a real DOM mutation.
   useEffect(() => {
     if (shakeCount === 0) return
-    const raf = requestAnimationFrame(() => setAnnouncement(blockedMessage))
+    const raf = requestAnimationFrame(() => setAnnouncement(BLOCKED_NO_KEY_MESSAGE))
     return () => cancelAnimationFrame(raf)
-  }, [shakeCount, blockedMessage])
-
-  const blockSend = (message: string): void => {
-    setAnnouncement('')
-    setBlockedMessage(message)
-    setShakeCount((count) => count + 1)
-    setDraft('')
-  }
+  }, [shakeCount])
 
   const submit = (event: FormEvent): void => {
     event.preventDefault()
     const trimmed = draft.trim()
+
+    if (trimmed.length > 0) {
+      const command = matchCommand(trimmed)
+      if (command) {
+        command.run(store)
+        setDraft('')
+        return
+      }
+    }
+
+    // A failed turn is the only unresolved state that persists indefinitely
+    // (pending/streaming resolve on their own) and retry is the only valid
+    // next step — so Enter here always retries, even with an empty draft,
+    // rather than rejecting whatever (if anything) was typed.
+    if (blockedByFailedTurn) {
+      setDraft('')
+      onRetryFailedTurn()
+      return
+    }
+
     if (trimmed.length === 0) return
 
-    const command = matchCommand(trimmed)
-    if (command) {
-      command.run(store)
-      setDraft('')
-      return
-    }
-
     if (!apiKeyConfigured) {
-      blockSend(BLOCKED_NO_KEY_MESSAGE)
-      return
-    }
-
-    if (blockedByFailedTurn) {
-      blockSend(BLOCKED_FAILED_TURN_MESSAGE)
+      setAnnouncement('')
+      setShakeCount((count) => count + 1)
+      setDraft('')
       return
     }
 
@@ -118,7 +120,7 @@ export function InputBar({
           role="status"
           className="px-4 pb-3 text-xs text-destructive"
         >
-          Retry the failed message above, or update your key in /settings.
+          Press Enter to retry the failed message, or update your key in /settings.
         </p>
       )}
       <p role="alert" aria-live="assertive" className="sr-only">
