@@ -74,7 +74,7 @@ describe('ChatWindow', () => {
     expect(list.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('shows the thinking indicator below the input while pending', () => {
+  it('shows the thinking state as the input placeholder while pending, adding no extra layout height', () => {
     render(
       <ChatWindow
         messages={messages}
@@ -84,13 +84,10 @@ describe('ChatWindow', () => {
         onRetry={vi.fn()}
       />
     )
-    const input = screen.getByRole('textbox', { name: 'Message Nova' })
-    const indicator = screen.getByTestId('pending-indicator')
-    expect(indicator).toHaveTextContent('Nova is thinking…')
-    expect(input.compareDocumentPosition(indicator) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByPlaceholderText('Nova is thinking…')).toBeInTheDocument()
   })
 
-  it('hides the thinking indicator once streaming has started, even though a reply is still awaited', () => {
+  it('reverts to the normal placeholder once streaming has started, even though a reply is still awaited', () => {
     render(
       <ChatWindow
         messages={messages}
@@ -100,6 +97,6 @@ describe('ChatWindow', () => {
         onRetry={vi.fn()}
       />
     )
-    expect(screen.queryByTestId('pending-indicator')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Ask Nova…')).toBeInTheDocument()
   })
 })

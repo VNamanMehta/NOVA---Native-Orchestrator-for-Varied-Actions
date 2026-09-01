@@ -5,13 +5,14 @@ import { useAppStore } from '../store/appStore'
 interface InputBarProps {
   onSend: (text: string) => void
   disabled: boolean
+  isPending: boolean
 }
 
 const SHAKE_DURATION_MS = 400
 
 const BLOCKED_SEND_MESSAGE = "Can't send — set your Groq API key in /settings first."
 
-export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element {
+export function InputBar({ onSend, disabled, isPending }: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
   const [shakeCount, setShakeCount] = useState(0)
   const [announcement, setAnnouncement] = useState('')
@@ -78,7 +79,7 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
         <input
           ref={inputRef}
           aria-label="Message Nova"
-          placeholder="Ask Nova…"
+          placeholder={isPending ? 'Nova is thinking…' : 'Ask Nova…'}
           value={draft}
           disabled={disabled}
           onChange={(event) => setDraft(event.target.value)}

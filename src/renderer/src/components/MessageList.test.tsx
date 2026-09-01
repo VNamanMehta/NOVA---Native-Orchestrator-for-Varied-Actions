@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ChatMessage } from '../types/chat'
 import { MessageList } from './MessageList'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  Reflect.deleteProperty(HTMLElement.prototype, 'scrollTo')
+})
 
 const chronological: ChatMessage[] = [
   { id: 'a', role: 'user', content: 'first', status: 'complete' },
@@ -38,5 +43,59 @@ describe('MessageList', () => {
     ]
     const { container } = render(<MessageList messages={onlyPending} isPending onRetry={vi.fn()} />)
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('does not animate the initial scroll on mount', () => {
+    const scrollTo = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: scrollTo
+    })
+
+    render(<MessageList messages={chronological} isPending={false} onRetry={vi.fn()} />)
+
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('scrolls smoothly to the bottom when a later message arrives', () => {
+    const scrollTo = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: scrollTo
+    })
+
+    const { rerender } = render(
+      <MessageList messages={chronological} isPending={false} onRetry={vi.fn()} />
+    )
+    const withNewMessage: ChatMessage[] = [
+      ...chronological,
+      { id: 'd', role: 'assistant', content: 'fourth', status: 'complete' }
+    ]
+    rerender(<MessageList messages={withNewMessage} isPending={false} onRetry={vi.fn()} />)
+
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }))
+  })
+
+  it('scrolls instantly instead of smoothly when the user prefers reduced motion', () => {
+    const scrollTo = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: scrollTo
+    })
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({ matches: query.includes('reduce') }) as MediaQueryList)
+    )
+
+    const { rerender } = render(
+      <MessageList messages={chronological} isPending={false} onRetry={vi.fn()} />
+    )
+    const withNewMessage: ChatMessage[] = [
+      ...chronological,
+      { id: 'd', role: 'assistant', content: 'fourth', status: 'complete' }
+    ]
+    rerender(<MessageList messages={withNewMessage} isPending={false} onRetry={vi.fn()} />)
+
+    expect(scrollTo).not.toHaveBeenCalled()
   })
 })
