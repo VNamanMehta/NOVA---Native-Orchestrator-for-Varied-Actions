@@ -15,8 +15,8 @@ describe('store', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('defaults to grok when nothing has been saved', () => {
-    expect(getActiveProvider(dir)).toBe('grok')
+  it('defaults to groq when nothing has been saved', () => {
+    expect(getActiveProvider(dir)).toBe('groq')
   })
 
   it('persists the active provider across separate calls', () => {
@@ -28,7 +28,7 @@ describe('store', () => {
     const otherDir = mkdtempSync(join(tmpdir(), 'nova-store-test-'))
     try {
       setActiveProvider(dir, 'anthropic')
-      expect(getActiveProvider(otherDir)).toBe('grok')
+      expect(getActiveProvider(otherDir)).toBe('groq')
     } finally {
       rmSync(otherDir, { recursive: true, force: true })
     }

@@ -30,6 +30,18 @@ describe('preload api.window', () => {
   })
 })
 
+describe('preload api.chat', () => {
+  it('send invokes chat:send with the text', () => {
+    api.chat.send('hello')
+    expect(invoke).toHaveBeenCalledWith(RequestChannels.chatSend, 'hello')
+  })
+
+  it('retry invokes chat:retry with no payload', () => {
+    api.chat.retry()
+    expect(invoke).toHaveBeenCalledWith(RequestChannels.chatRetry)
+  })
+})
+
 describe('preload api.settings', () => {
   it('get() invokes settings:get with no payload', () => {
     api.settings.get()
@@ -37,9 +49,9 @@ describe('preload api.settings', () => {
   })
 
   it('setApiKey wraps provider and key into one payload', () => {
-    api.settings.setApiKey('grok', 'sk-test')
+    api.settings.setApiKey('groq', 'sk-test')
     expect(invoke).toHaveBeenCalledWith(RequestChannels.settingsSetApiKey, {
-      provider: 'grok',
+      provider: 'groq',
       key: 'sk-test'
     })
   })

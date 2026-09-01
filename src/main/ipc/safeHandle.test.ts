@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ProviderError } from '../agent/providers/types'
 import { runSafely } from './safeHandle'
 
 describe('runSafely', () => {
@@ -19,5 +20,18 @@ describe('runSafely', () => {
       throw 'nope'
     })
     expect(result).toEqual({ ok: false, error: { message: 'nope' } })
+  })
+})
+
+describe('runSafely with a ProviderError', () => {
+  it('wraps a thrown ProviderError with its code', async () => {
+    const result = await runSafely(async () => {
+      throw new ProviderError('RATE_LIMIT', 'Groq is rate-limiting requests, try again shortly.')
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { message: 'Groq is rate-limiting requests, try again shortly.', code: 'RATE_LIMIT' }
+    })
   })
 })

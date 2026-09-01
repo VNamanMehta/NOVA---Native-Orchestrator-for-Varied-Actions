@@ -17,6 +17,9 @@ export const api: NovaApi = {
   chat: {
     send(text) {
       return ipcRenderer.invoke(RequestChannels.chatSend, text)
+    },
+    retry() {
+      return ipcRenderer.invoke(RequestChannels.chatRetry)
     }
   },
   settings: {

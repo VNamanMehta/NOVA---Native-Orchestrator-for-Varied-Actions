@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import type { ChatMessage } from '../types/chat'
 import { MessageItem } from './MessageItem'
 
@@ -8,17 +8,31 @@ interface MessageListProps {
   onRetry: (id: string) => void
 }
 
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 export function MessageList({
   messages,
   isPending,
   onRetry
 }: MessageListProps): React.JSX.Element | null {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const hasScrolledOnceRef = useRef(false)
   const visible = messages.filter((message) => message.status !== 'pending')
 
-  useEffect(() => {
+  // Smooth after the first paint only — animating through history on
+  // initial mount/view-swap would look wrong, so that one jumps instantly.
+  useLayoutEffect(() => {
     const el = scrollRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (!el) return
+    const smooth = hasScrolledOnceRef.current && !prefersReducedMotion()
+    hasScrolledOnceRef.current = true
+    if (smooth && typeof el.scrollTo === 'function') {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    } else {
+      el.scrollTop = el.scrollHeight
+    }
   }, [messages])
 
   if (visible.length === 0) return null

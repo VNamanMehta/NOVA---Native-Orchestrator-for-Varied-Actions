@@ -5,6 +5,7 @@
 const REQUIRED_LEAVES = [
   'window.reportContentHeight',
   'chat.send',
+  'chat.retry',
   'settings.get',
   'settings.setApiKey',
   'settings.setActiveProvider',

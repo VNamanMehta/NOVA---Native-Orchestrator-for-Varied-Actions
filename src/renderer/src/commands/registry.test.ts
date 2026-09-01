@@ -5,7 +5,7 @@ import { matchCommand } from './registry'
 function fakeStore(overrides: Partial<AppStore> = {}): AppStore {
   return {
     view: 'chat',
-    settings: { activeProvider: 'grok', apiKeyConfigured: false },
+    settings: { activeProvider: 'groq', apiKeyConfigured: false },
     openSettings: vi.fn(),
     closeSettings: vi.fn(),
     setSettings: vi.fn(),

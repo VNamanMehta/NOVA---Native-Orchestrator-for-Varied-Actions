@@ -99,6 +99,9 @@ export function createWindow(): BrowserWindow {
     resizable: true,
     alwaysOnTop: true,
     skipTaskbar: true,
+    // Matches base.css's --background — prevents a flash of Electron's
+    // default light background on every content-driven resize.
+    backgroundColor: '#1b1b1f',
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

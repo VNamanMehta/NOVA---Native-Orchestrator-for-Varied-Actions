@@ -25,6 +25,18 @@ describe('RequestValidators', () => {
     })
   })
 
+  describe(RequestChannels.chatRetry, () => {
+    const validate = RequestValidators[RequestChannels.chatRetry]
+
+    it('accepts undefined (no payload)', () => {
+      expect(validate(undefined)).toBeUndefined()
+    })
+
+    it('rejects a non-undefined payload', () => {
+      expect(() => validate({})).toThrow(/expects no payload/)
+    })
+  })
+
   describe(RequestChannels.settingsGet, () => {
     const validate = RequestValidators[RequestChannels.settingsGet]
 
@@ -41,19 +53,19 @@ describe('RequestValidators', () => {
     const validate = RequestValidators[RequestChannels.settingsSetApiKey]
 
     it('passes a valid { provider, key } through unchanged', () => {
-      expect(validate({ provider: 'grok', key: 'sk-test' })).toEqual({
-        provider: 'grok',
+      expect(validate({ provider: 'groq', key: 'sk-test' })).toEqual({
+        provider: 'groq',
         key: 'sk-test'
       })
     })
 
     it.each([
-      ['not an object', 'grok'],
+      ['not an object', 'groq'],
       ['missing provider', { key: 'sk-test' }],
       ['unknown provider', { provider: 'bard', key: 'sk-test' }],
-      ['missing key', { provider: 'grok' }],
-      ['non-string key', { provider: 'grok', key: 42 }],
-      ['empty key', { provider: 'grok', key: '   ' }]
+      ['missing key', { provider: 'groq' }],
+      ['non-string key', { provider: 'groq', key: 42 }],
+      ['empty key', { provider: 'groq', key: '   ' }]
     ])('rejects %s', (_label, payload) => {
       expect(() => validate(payload)).toThrow(/expects \{ provider, key \}/)
     })
@@ -67,7 +79,7 @@ describe('RequestValidators', () => {
     })
 
     it.each([
-      ['not an object', 'grok'],
+      ['not an object', 'groq'],
       ['missing provider', {}],
       ['unknown provider', { provider: 'bard' }]
     ])('rejects %s', (_label, payload) => {

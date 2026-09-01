@@ -3,7 +3,7 @@ import { ENABLED_PROVIDERS, isProviderEnabled, isProviderId } from './domain'
 
 describe('isProviderId', () => {
   it('accepts every known provider id', () => {
-    expect(isProviderId('grok')).toBe(true)
+    expect(isProviderId('groq')).toBe(true)
     expect(isProviderId('anthropic')).toBe(true)
     expect(isProviderId('openai')).toBe(true)
     expect(isProviderId('ollama')).toBe(true)
@@ -19,13 +19,13 @@ describe('isProviderId', () => {
 
 describe('isProviderEnabled', () => {
   it('is true only for providers in ENABLED_PROVIDERS', () => {
-    expect(isProviderEnabled('grok')).toBe(true)
+    expect(isProviderEnabled('groq')).toBe(true)
     expect(isProviderEnabled('anthropic')).toBe(false)
     expect(isProviderEnabled('openai')).toBe(false)
     expect(isProviderEnabled('ollama')).toBe(false)
   })
 
-  it('ENABLED_PROVIDERS currently contains only grok', () => {
-    expect(ENABLED_PROVIDERS).toEqual(['grok'])
+  it('ENABLED_PROVIDERS currently contains only groq', () => {
+    expect(ENABLED_PROVIDERS).toEqual(['groq'])
   })
 })

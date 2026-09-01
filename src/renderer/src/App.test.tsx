@@ -48,7 +48,7 @@ describe('App', () => {
         ...createApiStub().settings,
         get: vi.fn(async () => ({
           ok: true as const,
-          value: { activeProvider: 'grok' as const, apiKeyConfigured: false }
+          value: { activeProvider: 'groq' as const, apiKeyConfigured: false }
         }))
       }
     })

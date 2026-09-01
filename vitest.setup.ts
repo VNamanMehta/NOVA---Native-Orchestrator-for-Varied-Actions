@@ -15,12 +15,16 @@ export function createApiStub(): NovaApi {
       send: vi.fn(async (text: string) => ({
         ok: true as const,
         value: { role: 'assistant' as const, content: text }
+      })),
+      retry: vi.fn(async () => ({
+        ok: true as const,
+        value: { role: 'assistant' as const, content: '' }
       }))
     },
     settings: {
       get: vi.fn(async () => ({
         ok: true as const,
-        value: { activeProvider: 'grok' as const, apiKeyConfigured: true }
+        value: { activeProvider: 'groq' as const, apiKeyConfigured: true }
       })),
       setApiKey: vi.fn(async () => ({ ok: true as const, value: undefined })),
       setActiveProvider: vi.fn(async () => ({ ok: true as const, value: undefined }))

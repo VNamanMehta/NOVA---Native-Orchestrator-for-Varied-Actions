@@ -11,7 +11,7 @@ export interface AppStore {
 
 export const useAppStore = create<AppStore>((set) => ({
   view: 'chat',
-  settings: { activeProvider: 'grok', apiKeyConfigured: false },
+  settings: { activeProvider: 'groq', apiKeyConfigured: false },
   openSettings: () => set({ view: 'settings' }),
   closeSettings: () => set({ view: 'chat' }),
   setSettings: (next) => set({ settings: next })
