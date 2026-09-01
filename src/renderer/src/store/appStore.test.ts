@@ -10,7 +10,7 @@ describe('useAppStore', () => {
   it('starts on the chat view with no api key configured', () => {
     const { result } = renderHook(() => useAppStore())
     expect(result.current.view).toBe('chat')
-    expect(result.current.settings).toEqual({ activeProvider: 'grok', apiKeyConfigured: false })
+    expect(result.current.settings).toEqual({ activeProvider: 'groq', apiKeyConfigured: false })
   })
 
   it('openSettings switches the view to settings', () => {
@@ -28,7 +28,7 @@ describe('useAppStore', () => {
 
   it('setSettings replaces the settings state', () => {
     const { result } = renderHook(() => useAppStore())
-    act(() => result.current.setSettings({ activeProvider: 'grok', apiKeyConfigured: true }))
-    expect(result.current.settings).toEqual({ activeProvider: 'grok', apiKeyConfigured: true })
+    act(() => result.current.setSettings({ activeProvider: 'groq', apiKeyConfigured: true }))
+    expect(result.current.settings).toEqual({ activeProvider: 'groq', apiKeyConfigured: true })
   })
 })

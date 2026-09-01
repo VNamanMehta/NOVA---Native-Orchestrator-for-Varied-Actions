@@ -26,12 +26,12 @@ describe('runSafely', () => {
 describe('runSafely with a ProviderError', () => {
   it('wraps a thrown ProviderError with its code', async () => {
     const result = await runSafely(async () => {
-      throw new ProviderError('RATE_LIMIT', 'Grok is rate-limiting requests, try again shortly.')
+      throw new ProviderError('RATE_LIMIT', 'Groq is rate-limiting requests, try again shortly.')
     })
 
     expect(result).toEqual({
       ok: false,
-      error: { message: 'Grok is rate-limiting requests, try again shortly.', code: 'RATE_LIMIT' }
+      error: { message: 'Groq is rate-limiting requests, try again shortly.', code: 'RATE_LIMIT' }
     })
   })
 })

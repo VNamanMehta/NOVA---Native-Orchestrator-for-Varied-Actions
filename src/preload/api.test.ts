@@ -49,9 +49,9 @@ describe('preload api.settings', () => {
   })
 
   it('setApiKey wraps provider and key into one payload', () => {
-    api.settings.setApiKey('grok', 'sk-test')
+    api.settings.setApiKey('groq', 'sk-test')
     expect(invoke).toHaveBeenCalledWith(RequestChannels.settingsSetApiKey, {
-      provider: 'grok',
+      provider: 'groq',
       key: 'sk-test'
     })
   })

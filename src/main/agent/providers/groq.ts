@@ -1,8 +1,8 @@
 import { ProviderError, type ProviderErrorCode } from './types'
 import type { LLMProvider, NormalizedMessage, ProviderEvent, ToolSchema } from './types'
 
-const GROK_API_URL = 'https://api.x.ai/v1/chat/completions'
-const GROK_MODEL = 'grok-4-fast'
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL = 'openai/gpt-oss-20b'
 const REQUEST_TIMEOUT_MS = 30000
 
 function mapStatusToErrorCode(status: number): ProviderErrorCode {
@@ -11,11 +11,11 @@ function mapStatusToErrorCode(status: number): ProviderErrorCode {
   return 'PROVIDER_ERROR'
 }
 
-interface GrokStreamFrame {
+interface GroqStreamFrame {
   choices?: Array<{ delta?: { content?: string } }>
 }
 
-export function createGrokProvider(apiKey: string): LLMProvider {
+export function createGroqProvider(apiKey: string): LLMProvider {
   return {
     async *chat(
       messages: NormalizedMessage[],
@@ -27,29 +27,29 @@ export function createGrokProvider(apiKey: string): LLMProvider {
 
       let response: Response
       try {
-        response = await fetch(GROK_API_URL, {
+        response = await fetch(GROQ_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`
           },
-          body: JSON.stringify({ model: GROK_MODEL, messages, stream: true }),
+          body: JSON.stringify({ model: GROQ_MODEL, messages, stream: true }),
           signal: requestSignal
         })
       } catch (err) {
-        throw new ProviderError('NETWORK', `Could not reach Grok: ${(err as Error).message}`)
+        throw new ProviderError('NETWORK', `Could not reach Groq: ${(err as Error).message}`)
       }
 
       if (!response.ok) {
         throw new ProviderError(
           mapStatusToErrorCode(response.status),
-          `Grok returned HTTP ${response.status}.`
+          `Groq returned HTTP ${response.status}.`
         )
       }
 
       const body = response.body
       if (!body) {
-        throw new ProviderError('PROVIDER_ERROR', 'Grok returned an empty stream body.')
+        throw new ProviderError('PROVIDER_ERROR', 'Groq returned an empty stream body.')
       }
 
       const reader = body.getReader()
@@ -76,11 +76,11 @@ export function createGrokProvider(apiKey: string): LLMProvider {
               return
             }
 
-            let parsed: GrokStreamFrame
+            let parsed: GroqStreamFrame
             try {
-              parsed = JSON.parse(data) as GrokStreamFrame
+              parsed = JSON.parse(data) as GroqStreamFrame
             } catch {
-              throw new ProviderError('PROVIDER_ERROR', 'Grok sent a malformed stream frame.')
+              throw new ProviderError('PROVIDER_ERROR', 'Groq sent a malformed stream frame.')
             }
 
             const delta = parsed.choices?.[0]?.delta?.content
@@ -94,11 +94,11 @@ export function createGrokProvider(apiKey: string): LLMProvider {
         if (err instanceof ProviderError) throw err
         throw new ProviderError(
           'NETWORK',
-          `Grok stream connection dropped: ${(err as Error).message}`
+          `Groq stream connection dropped: ${(err as Error).message}`
         )
       }
 
-      throw new ProviderError('PROVIDER_ERROR', 'Grok stream ended without a [DONE] sentinel.')
+      throw new ProviderError('PROVIDER_ERROR', 'Groq stream ended without a [DONE] sentinel.')
     }
   }
 }

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const getActiveProvider = vi.fn()
 const getApiKey = vi.fn()
-const createGrokProviderMock = vi.fn((key: string) => ({ __grokKey: key }))
+const createGroqProviderMock = vi.fn((key: string) => ({ __groqKey: key }))
 
 vi.mock('electron', () => ({ app: { getPath: () => '/fake/userData' } }))
 vi.mock('../../config/store', () => ({
@@ -11,8 +11,8 @@ vi.mock('../../config/store', () => ({
 vi.mock('../../config/secrets', () => ({
   getApiKey: (...args: unknown[]) => getApiKey(...args)
 }))
-vi.mock('./grok', () => ({
-  createGrokProvider: (key: string) => createGrokProviderMock(key)
+vi.mock('./groq', () => ({
+  createGroqProvider: (key: string) => createGroqProviderMock(key)
 }))
 
 import { createProvider } from './index'
@@ -21,23 +21,23 @@ import { ProviderError } from './types'
 beforeEach(() => {
   getActiveProvider.mockReset()
   getApiKey.mockReset()
-  createGrokProviderMock.mockClear()
+  createGroqProviderMock.mockClear()
 })
 
 describe('createProvider', () => {
-  it('creates a grok provider using the stored api key', () => {
-    getActiveProvider.mockReturnValue('grok')
+  it('creates a groq provider using the stored api key', () => {
+    getActiveProvider.mockReturnValue('groq')
     getApiKey.mockReturnValue('sk-test')
 
     const provider = createProvider()
 
-    expect(getApiKey).toHaveBeenCalledWith('/fake/userData', 'grok')
-    expect(createGrokProviderMock).toHaveBeenCalledWith('sk-test')
-    expect(provider).toEqual({ __grokKey: 'sk-test' })
+    expect(getApiKey).toHaveBeenCalledWith('/fake/userData', 'groq')
+    expect(createGroqProviderMock).toHaveBeenCalledWith('sk-test')
+    expect(provider).toEqual({ __groqKey: 'sk-test' })
   })
 
   it('throws an AUTH ProviderError when no key is configured', () => {
-    getActiveProvider.mockReturnValue('grok')
+    getActiveProvider.mockReturnValue('groq')
     getApiKey.mockReturnValue(null)
 
     let caught: unknown

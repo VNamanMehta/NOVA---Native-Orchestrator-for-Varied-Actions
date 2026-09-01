@@ -7,12 +7,12 @@ import { useAppStore } from '../store/appStore'
 import { SettingsPanel } from './SettingsPanel'
 
 describe('SettingsPanel', () => {
-  it('renders every provider, with only Grok selectable', () => {
+  it('renders every provider, with only Groq selectable', () => {
     render(<SettingsPanel />)
 
-    const grok = screen.getByRole('radio', { name: /grok/i })
-    expect(grok).toHaveAttribute('aria-checked', 'true')
-    expect(grok).toBeEnabled()
+    const groq = screen.getByRole('radio', { name: /groq/i })
+    expect(groq).toHaveAttribute('aria-checked', 'true')
+    expect(groq).toBeEnabled()
 
     for (const name of [/anthropic/i, /openai/i, /ollama/i]) {
       expect(screen.getByRole('radio', { name })).toBeDisabled()
@@ -40,12 +40,12 @@ describe('SettingsPanel', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => expect(screen.getByTestId('save-confirmation')).toBeInTheDocument())
-    expect(setApiKey).toHaveBeenCalledWith('grok', 'sk-test-123')
+    expect(setApiKey).toHaveBeenCalledWith('groq', 'sk-test-123')
     expect(screen.getByText('API key configured')).toBeInTheDocument()
   })
 
   it('shows a configured placeholder with Replace when a key already exists', () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: true } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: true } })
     render(<SettingsPanel />)
 
     expect(screen.getByText('API key configured')).toBeInTheDocument()
@@ -132,7 +132,7 @@ describe('SettingsPanel', () => {
     vi.useFakeTimers()
     useAppStore.setState({
       view: 'settings',
-      settings: { activeProvider: 'grok', apiKeyConfigured: false }
+      settings: { activeProvider: 'groq', apiKeyConfigured: false }
     })
     const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
     vi.stubGlobal('api', {
@@ -159,7 +159,7 @@ describe('SettingsPanel', () => {
     vi.useFakeTimers()
     useAppStore.setState({
       view: 'settings',
-      settings: { activeProvider: 'grok', apiKeyConfigured: true }
+      settings: { activeProvider: 'groq', apiKeyConfigured: true }
     })
     const setApiKey = vi.fn(async () => ({ ok: true as const, value: undefined }))
     vi.stubGlobal('api', {
@@ -186,7 +186,7 @@ describe('SettingsPanel', () => {
   it('gives only the selected radio a tab stop, per the roving-tabindex pattern', () => {
     render(<SettingsPanel />)
 
-    expect(screen.getByRole('radio', { name: /grok/i })).toHaveAttribute('tabIndex', '0')
+    expect(screen.getByRole('radio', { name: /groq/i })).toHaveAttribute('tabIndex', '0')
     for (const name of [/anthropic/i, /openai/i, /ollama/i]) {
       expect(screen.getByRole('radio', { name })).toHaveAttribute('tabIndex', '-1')
     }
@@ -201,11 +201,11 @@ describe('SettingsPanel', () => {
     const user = userEvent.setup()
     render(<SettingsPanel />)
 
-    const grok = screen.getByRole('radio', { name: /grok/i })
-    grok.focus()
+    const groq = screen.getByRole('radio', { name: /groq/i })
+    groq.focus()
     await user.keyboard('{ArrowDown}')
 
-    expect(grok).toHaveFocus()
+    expect(groq).toHaveFocus()
     expect(setActiveProvider).not.toHaveBeenCalled()
   })
 

@@ -5,7 +5,7 @@ import { useAppStore } from '../store/appStore'
 import { InputBar } from './InputBar'
 
 beforeEach(() => {
-  useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: true } })
+  useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: true } })
 })
 
 describe('InputBar', () => {
@@ -65,11 +65,11 @@ describe('InputBar', () => {
   })
 
   it('shows the nudge immediately when no API key is configured, before any send attempt', () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
     expect(screen.getByTestId('no-api-key-nudge')).toHaveTextContent(
-      'Set your Grok API key in /settings to start chatting.'
+      'Set your Groq API key in /settings to start chatting.'
     )
   })
 
@@ -79,7 +79,7 @@ describe('InputBar', () => {
   })
 
   it('blocks sending when no API key is configured', async () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     const user = userEvent.setup()
     const onSend = vi.fn()
     render(<InputBar onSend={onSend} disabled={false} />)
@@ -91,7 +91,7 @@ describe('InputBar', () => {
   })
 
   it('the nudge persists while the user keeps typing (no key configured)', async () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     const user = userEvent.setup()
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
@@ -102,7 +102,7 @@ describe('InputBar', () => {
   })
 
   it('shakes the input bar on a blocked send attempt', async () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     const user = userEvent.setup()
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
@@ -113,7 +113,7 @@ describe('InputBar', () => {
   })
 
   it('restarts the shake animation on a second blocked attempt shortly after the first', async () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     const user = userEvent.setup()
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
@@ -129,14 +129,14 @@ describe('InputBar', () => {
   })
 
   it('exposes the nudge as a status region for assistive tech', () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
     expect(screen.getByTestId('no-api-key-nudge')).toHaveAttribute('role', 'status')
   })
 
   it('announces a blocked send attempt for screen readers', async () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     const user = userEvent.setup()
     render(<InputBar onSend={vi.fn()} disabled={false} />)
 
@@ -145,13 +145,13 @@ describe('InputBar', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
-        "Can't send — set your Grok API key in /settings first."
+        "Can't send — set your Groq API key in /settings first."
       )
     })
   })
 
   it('clears the draft on a blocked send, so a follow-up /settings routes cleanly', async () => {
-    useAppStore.setState({ settings: { activeProvider: 'grok', apiKeyConfigured: false } })
+    useAppStore.setState({ settings: { activeProvider: 'groq', apiKeyConfigured: false } })
     const user = userEvent.setup()
     const onSend = vi.fn()
     render(<InputBar onSend={onSend} disabled={false} />)

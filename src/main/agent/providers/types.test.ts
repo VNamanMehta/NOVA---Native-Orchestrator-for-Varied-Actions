@@ -3,11 +3,11 @@ import { ProviderError } from './types'
 
 describe('ProviderError', () => {
   it('is a real Error carrying a provider error code', () => {
-    const err = new ProviderError('AUTH', 'No API key configured for grok.')
+    const err = new ProviderError('AUTH', 'No API key configured for groq.')
 
     expect(err).toBeInstanceOf(Error)
     expect(err.code).toBe('AUTH')
-    expect(err.message).toBe('No API key configured for grok.')
+    expect(err.message).toBe('No API key configured for groq.')
   })
 
   it.each(['AUTH', 'RATE_LIMIT', 'NETWORK', 'PROVIDER_ERROR', 'UNKNOWN'] as const)(

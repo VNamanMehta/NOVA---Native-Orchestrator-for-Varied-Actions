@@ -21,11 +21,11 @@ describe('sendMessage', () => {
   })
 
   it('wraps a thrown ProviderError with its code when run through runSafely', async () => {
-    runTurn.mockRejectedValue(new ProviderError('AUTH', 'No API key configured for grok.'))
+    runTurn.mockRejectedValue(new ProviderError('AUTH', 'No API key configured for groq.'))
 
     expect(await runSafely(() => sendMessage('hello'))).toEqual({
       ok: false,
-      error: { message: 'No API key configured for grok.', code: 'AUTH' }
+      error: { message: 'No API key configured for groq.', code: 'AUTH' }
     })
   })
 })

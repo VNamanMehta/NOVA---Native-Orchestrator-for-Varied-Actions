@@ -41,12 +41,12 @@ describe('MessageItem', () => {
       role: 'assistant',
       content: 'Hello wor',
       status: 'error',
-      errorMessage: "Couldn't reach Grok — check your connection."
+      errorMessage: "Couldn't reach Groq — check your connection."
     }
     render(<MessageItem message={msg} onRetry={vi.fn()} />)
 
     expect(screen.getByText('Hello wor')).toBeInTheDocument()
-    expect(screen.getByText("Couldn't reach Grok — check your connection.")).toBeInTheDocument()
+    expect(screen.getByText("Couldn't reach Groq — check your connection.")).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 

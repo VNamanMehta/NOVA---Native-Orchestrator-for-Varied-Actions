@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { getApiKey } from '../../config/secrets'
 import { getActiveProvider } from '../../config/store'
-import { createGrokProvider } from './grok'
+import { createGroqProvider } from './groq'
 import { ProviderError } from './types'
 import type { LLMProvider } from './types'
 
@@ -15,8 +15,8 @@ export function createProvider(): LLMProvider {
   }
 
   switch (provider) {
-    case 'grok':
-      return createGrokProvider(apiKey)
+    case 'groq':
+      return createGroqProvider(apiKey)
     default:
       throw new ProviderError('UNKNOWN', `${provider} is not implemented yet.`)
   }

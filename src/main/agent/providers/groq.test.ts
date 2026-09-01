@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createGrokProvider } from './grok'
+import { createGroqProvider } from './groq'
 import type { ProviderEvent } from './types'
 
 function sseStream(frames: string[]): ReadableStream<Uint8Array> {
@@ -23,7 +23,7 @@ async function collect(iterable: AsyncIterable<ProviderEvent>): Promise<Provider
   return events
 }
 
-describe('createGrokProvider', () => {
+describe('createGroqProvider', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
   })
@@ -39,7 +39,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(body, { status: 200 }))
     )
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     const events = await collect(provider.chat([{ role: 'user', content: 'hi' }], []))
 
     expect(events).toEqual([
@@ -55,14 +55,14 @@ describe('createGrokProvider', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     await collect(provider.chat([{ role: 'user', content: 'hi' }], []))
 
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('https://api.x.ai/v1/chat/completions')
+    expect(url).toBe('https://api.groq.com/openai/v1/chat/completions')
     const body = JSON.parse(init.body as string)
     expect(body).toMatchObject({
-      model: 'grok-4-fast',
+      model: 'openai/gpt-oss-20b',
       stream: true,
       messages: [{ role: 'user', content: 'hi' }]
     })
@@ -75,7 +75,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(null, { status: 401 }))
     )
 
-    const provider = createGrokProvider('sk-bad')
+    const provider = createGroqProvider('sk-bad')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'AUTH' })
   })
 
@@ -85,7 +85,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(null, { status: 403 }))
     )
 
-    const provider = createGrokProvider('sk-bad')
+    const provider = createGroqProvider('sk-bad')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'AUTH' })
   })
 
@@ -95,7 +95,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(null, { status: 429 }))
     )
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'RATE_LIMIT' })
   })
 
@@ -105,7 +105,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(null, { status: 500 }))
     )
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'PROVIDER_ERROR' })
   })
 
@@ -117,7 +117,7 @@ describe('createGrokProvider', () => {
       })
     )
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'NETWORK' })
   })
 
@@ -139,7 +139,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(body, { status: 200 }))
     )
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     const events: ProviderEvent[] = []
     await expect(
       (async () => {
@@ -156,7 +156,7 @@ describe('createGrokProvider', () => {
       vi.fn(async () => new Response(body, { status: 200 }))
     )
 
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     await expect(collect(provider.chat([], []))).rejects.toMatchObject({ code: 'PROVIDER_ERROR' })
   })
 
@@ -172,7 +172,7 @@ describe('createGrokProvider', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const controller = new AbortController()
-    const provider = createGrokProvider('sk-test')
+    const provider = createGroqProvider('sk-test')
     const iterator = provider.chat([], [], controller.signal)[Symbol.asyncIterator]()
     const pending = iterator.next()
     controller.abort()

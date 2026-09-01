@@ -1,12 +1,12 @@
-export type ProviderId = 'grok' | 'anthropic' | 'openai' | 'ollama'
+export type ProviderId = 'groq' | 'anthropic' | 'openai' | 'ollama'
 
-export const ALL_PROVIDERS: readonly ProviderId[] = ['grok', 'anthropic', 'openai', 'ollama']
+export const ALL_PROVIDERS: readonly ProviderId[] = ['groq', 'anthropic', 'openai', 'ollama']
 
 export function isProviderId(value: unknown): value is ProviderId {
   return typeof value === 'string' && (ALL_PROVIDERS as readonly string[]).includes(value)
 }
 
-export const ENABLED_PROVIDERS: readonly ProviderId[] = ['grok']
+export const ENABLED_PROVIDERS: readonly ProviderId[] = ['groq']
 
 export function isProviderEnabled(provider: ProviderId): boolean {
   return ENABLED_PROVIDERS.includes(provider)

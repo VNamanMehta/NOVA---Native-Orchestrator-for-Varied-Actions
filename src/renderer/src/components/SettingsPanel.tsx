@@ -9,7 +9,7 @@ import { useAppStore } from '../store/appStore'
 import { cn } from '../lib/utils'
 
 const PROVIDER_LABELS: Record<ProviderId, string> = {
-  grok: 'Grok',
+  groq: 'Groq',
   anthropic: 'Anthropic',
   openai: 'OpenAI',
   ollama: 'Ollama (local)'

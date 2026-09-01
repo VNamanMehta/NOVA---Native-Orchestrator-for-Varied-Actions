@@ -11,7 +11,7 @@ interface StoreSchema {
 }
 
 function openStore(cwd: string): InstanceType<typeof Store<StoreSchema>> {
-  return new Store<StoreSchema>({ cwd, defaults: { activeProvider: 'grok' } })
+  return new Store<StoreSchema>({ cwd, defaults: { activeProvider: 'groq' } })
 }
 
 export function getActiveProvider(cwd: string): ProviderId {

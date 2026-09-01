@@ -28,18 +28,18 @@ describe('settings', () => {
     rmSync(userDataDir, { recursive: true, force: true })
   })
 
-  it('defaults to grok with no key configured', async () => {
-    expect(await getSettings()).toEqual({ activeProvider: 'grok', apiKeyConfigured: false })
+  it('defaults to groq with no key configured', async () => {
+    expect(await getSettings()).toEqual({ activeProvider: 'groq', apiKeyConfigured: false })
   })
 
   it('reflects a saved key in apiKeyConfigured', async () => {
-    await saveApiKey('grok', 'sk-test')
-    expect(await getSettings()).toEqual({ activeProvider: 'grok', apiKeyConfigured: true })
+    await saveApiKey('groq', 'sk-test')
+    expect(await getSettings()).toEqual({ activeProvider: 'groq', apiKeyConfigured: true })
   })
 
   it('saves and reads back the active provider', async () => {
-    await saveActiveProvider('grok')
-    expect((await getSettings()).activeProvider).toBe('grok')
+    await saveActiveProvider('groq')
+    expect((await getSettings()).activeProvider).toBe('groq')
   })
 
   it('rejects activating a provider that is not enabled', async () => {

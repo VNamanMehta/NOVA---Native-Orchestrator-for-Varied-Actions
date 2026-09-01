@@ -9,7 +9,7 @@ interface InputBarProps {
 
 const SHAKE_DURATION_MS = 400
 
-const BLOCKED_SEND_MESSAGE = "Can't send — set your Grok API key in /settings first."
+const BLOCKED_SEND_MESSAGE = "Can't send — set your Groq API key in /settings first."
 
 export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element {
   const [draft, setDraft] = useState('')
@@ -91,7 +91,7 @@ export function InputBar({ onSend, disabled }: InputBarProps): React.JSX.Element
           role="status"
           className="px-4 pb-3 text-xs text-destructive"
         >
-          Set your Grok API key in /settings to start chatting.
+          Set your Groq API key in /settings to start chatting.
         </p>
       )}
       <p role="alert" aria-live="assertive" className="sr-only">
